@@ -1,0 +1,27 @@
+
+
+buildscript {
+  repositories {
+	mavenCentral()
+  }
+}
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+
+dependencies {
+  compile files('/usr/share/opencv/java/opencv-2412.jar')
+}
+
+jar {
+  from configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+}
+
+task genJavadoc(type: Jar, dependsOn: javadoc) {
+  classifier = 'javadoc'
+  from javadoc.destinationDir
+}
+
+artifacts {
+  archives genJavadoc
+}

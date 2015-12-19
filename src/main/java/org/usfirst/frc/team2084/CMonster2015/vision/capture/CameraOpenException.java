@@ -17,7 +17,7 @@ public class CameraOpenException extends CameraException {
 	/**
 	 * Create a {@link CameraOpenException} for the specified device.
 	 * 
-	 * @param the camera that cannot be opened
+	 * @param device the camera that cannot be opened
 	 */
 	public CameraOpenException(int device) {
 		super("Unable to open stream from camera " + device);
@@ -26,7 +26,7 @@ public class CameraOpenException extends CameraException {
 	/**
 	 * Create a {@link CameraOpenException} for the specified camera or file.
 	 * 
-	 * @param the camera that cannot be opened
+	 * @param filename the camera that cannot be opened
 	 */
 	public CameraOpenException(String filename) {
 		super("Unable to open stream from file or camera: " + filename);

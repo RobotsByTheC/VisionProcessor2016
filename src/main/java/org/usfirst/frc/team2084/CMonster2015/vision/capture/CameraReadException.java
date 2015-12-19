@@ -17,7 +17,7 @@ public class CameraReadException extends CameraException {
 	/**
 	 * Create a {@link CameraReadException} for the specified device.
 	 * 
-	 * @param the camera that cannot be read
+	 * @param device the camera that cannot be read
 	 */
 	public CameraReadException(int device) {
 		super("Unable to read from camera " + device);
@@ -26,7 +26,7 @@ public class CameraReadException extends CameraException {
 	/**
 	 * Create a {@link CameraReadException} for the specified camera or file.
 	 * 
-	 * @param the camera or file that cannot be read
+	 * @param filename the camera or file that cannot be read
 	 */
 	public CameraReadException(String filename) {
 		super("Unable to read from camera or file " + filename);

@@ -6,12 +6,8 @@
  */
 package org.usfirst.frc.team2084.CMonster2015.vision;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfPoint;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
@@ -27,7 +23,6 @@ public class ToteTrackingProcessor extends VisionProcessor {
 
     private Mat hsvImage = new Mat();
     private Mat thresholdImage = new Mat();
-    private List<MatOfPoint> contours = new ArrayList<>();
 
     /**
      * @param capture

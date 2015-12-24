@@ -18,5 +18,3 @@
 .gradle/
 
 !gradle-wrapper.jar
-
-.classpath

@@ -17,21 +17,21 @@ import org.usfirst.frc.team2084.CMonster2015.vision.capture.CameraCapture;
  */
 public class TestVisionProcessor extends VisionProcessor {
 
-	/**
-	 * Creates a new instance using the specified camera.
-	 *
-	 * @param capture the camera to capture from
-	 */
-	public TestVisionProcessor(CameraCapture capture) {
-		super(capture);
-	}
+    /**
+     * Creates a new instance using the specified camera.
+     *
+     * @param capture the camera to capture from
+     */
+    public TestVisionProcessor(CameraCapture capture) {
+        super(capture);
+    }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	protected void process(Mat cameraImage, Mat outputImage) {
-		debugImage("Test", cameraImage);
-	}
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void process(Mat cameraImage, Mat outputImage) {
+        debugImage("Test", cameraImage);
+    }
 
 }

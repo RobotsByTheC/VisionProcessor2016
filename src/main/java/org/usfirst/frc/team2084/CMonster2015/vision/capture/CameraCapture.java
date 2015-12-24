@@ -14,8 +14,8 @@ import org.opencv.highgui.VideoCapture;
 /**
  * Captures images from a camera asynchronously. This allows applications to
  * work at any frame rate without worrying about what the camera supports. The
- * image returned from capture() is always the latest one and ones in
- * between are skipped.
+ * image returned from capture() is always the latest one and ones in between
+ * are skipped.
  * 
  * @author Ben Wolsieffer
  */

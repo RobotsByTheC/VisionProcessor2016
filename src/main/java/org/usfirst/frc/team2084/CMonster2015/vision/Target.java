@@ -6,7 +6,6 @@
  */
 package org.usfirst.frc.team2084.CMonster2015.vision;
 
-
 /**
  * 
  * 

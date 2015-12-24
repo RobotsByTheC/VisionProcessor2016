@@ -16,19 +16,19 @@ package org.usfirst.frc.team2084.CMonster2015.vision.capture;
 @SuppressWarnings("serial")
 public class CameraException extends Exception {
 
-	/**
-	 * Creates a {@link CameraException} with the specified message.
-	 * 
-	 * @param message the message
-	 */
-	public CameraException(String message) {
-		super(message);
-	}
+    /**
+     * Creates a {@link CameraException} with the specified message.
+     * 
+     * @param message the message
+     */
+    public CameraException(String message) {
+        super(message);
+    }
 
-	/**
-	 * Creates an unknown camera error.
-	 */
-	public CameraException() {
-		super("Unknown camera error");
-	}
+    /**
+     * Creates an unknown camera error.
+     */
+    public CameraException() {
+        super("Unknown camera error");
+    }
 }

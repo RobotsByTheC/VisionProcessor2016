@@ -14,21 +14,21 @@ package org.usfirst.frc.team2084.CMonster2015.vision.capture;
 @SuppressWarnings("serial")
 public class CameraOpenException extends CameraException {
 
-	/**
-	 * Create a {@link CameraOpenException} for the specified device.
-	 * 
-	 * @param device the camera that cannot be opened
-	 */
-	public CameraOpenException(int device) {
-		super("Unable to open stream from camera " + device);
-	}
+    /**
+     * Create a {@link CameraOpenException} for the specified device.
+     * 
+     * @param device the camera that cannot be opened
+     */
+    public CameraOpenException(int device) {
+        super("Unable to open stream from camera " + device);
+    }
 
-	/**
-	 * Create a {@link CameraOpenException} for the specified camera or file.
-	 * 
-	 * @param filename the camera that cannot be opened
-	 */
-	public CameraOpenException(String filename) {
-		super("Unable to open stream from file or camera: " + filename);
-	}
+    /**
+     * Create a {@link CameraOpenException} for the specified camera or file.
+     * 
+     * @param filename the camera that cannot be opened
+     */
+    public CameraOpenException(String filename) {
+        super("Unable to open stream from file or camera: " + filename);
+    }
 }

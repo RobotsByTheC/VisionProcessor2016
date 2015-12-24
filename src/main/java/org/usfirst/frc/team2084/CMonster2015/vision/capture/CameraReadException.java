@@ -14,21 +14,21 @@ package org.usfirst.frc.team2084.CMonster2015.vision.capture;
 @SuppressWarnings("serial")
 public class CameraReadException extends CameraException {
 
-	/**
-	 * Create a {@link CameraReadException} for the specified device.
-	 * 
-	 * @param device the camera that cannot be read
-	 */
-	public CameraReadException(int device) {
-		super("Unable to read from camera " + device);
-	}
+    /**
+     * Create a {@link CameraReadException} for the specified device.
+     * 
+     * @param device the camera that cannot be read
+     */
+    public CameraReadException(int device) {
+        super("Unable to read from camera " + device);
+    }
 
-	/**
-	 * Create a {@link CameraReadException} for the specified camera or file.
-	 * 
-	 * @param filename the camera or file that cannot be read
-	 */
-	public CameraReadException(String filename) {
-		super("Unable to read from camera or file " + filename);
-	}
+    /**
+     * Create a {@link CameraReadException} for the specified camera or file.
+     * 
+     * @param filename the camera or file that cannot be read
+     */
+    public CameraReadException(String filename) {
+        super("Unable to read from camera or file " + filename);
+    }
 }

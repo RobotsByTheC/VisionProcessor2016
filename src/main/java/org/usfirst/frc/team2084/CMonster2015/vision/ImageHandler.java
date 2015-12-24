@@ -14,8 +14,8 @@ import org.opencv.core.Mat;
 @FunctionalInterface
 public interface ImageHandler {
 
-	public void imageProcessed(Mat image);
+    public void imageProcessed(Mat image);
 
-	public default void debugImage(String name, Mat image) {
-	}
+    public default void debugImage(String name, Mat image) {
+    }
 }

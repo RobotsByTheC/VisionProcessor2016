@@ -1,5 +1,3 @@
-
-
 buildscript {
   repositories {
 	mavenCentral()
@@ -9,8 +7,25 @@ buildscript {
 apply plugin: 'java'
 apply plugin: 'eclipse'
 
+// This should not be changed without notifying everybody
+String opencvVersion = "2.4.12"
+String opencvCode = opencvVersion.replace(".", "")
+
+// Add your own OpenCV location to the end of this list
+String[] opencvLocations = ['/usr/share/opencv/java/opencv-' + opencvCode + '.jar', 
+							'/usr/share/java/opencv.jar',
+							'/usr/local/Cellar/opencv/' + opencvVersion + '/share/OpenCV/java/opencv-' + opencvCode + '.jar']
+
+String opencvJar = opencvLocations.find {
+	return new File(it).exists()
+}
+
+if (opencvJar == null) {
+	throw new GradleException("OpenCV jar not found.")
+}
+
 dependencies {
-  compile files('/usr/share/opencv/java/opencv-2412.jar')
+  compile files(opencvJar)
 }
 
 jar {

@@ -11,6 +11,9 @@ import java.util.ArrayList;
 import org.opencv.core.Mat;
 import org.usfirst.frc.team2084.CMonster2015.vision.capture.CameraCapture;
 
+import edu.wpi.first.wpilibj.networktables.NetworkTable;
+import edu.wpi.first.wpilibj.tables.ITable;
+
 /**
  * Provides easy access to the vision processing algorithm. All the public
  * methods are thread safe.
@@ -18,7 +21,7 @@ import org.usfirst.frc.team2084.CMonster2015.vision.capture.CameraCapture;
  * @author Ben Wolsieffer
  */
 public abstract class VisionProcessor {
-
+    
     /**
      * Thread that runs the OpenCV processing of the camera.
      */
@@ -44,6 +47,7 @@ public abstract class VisionProcessor {
         }
     }
 
+    protected static final ITable VISION_RESULTS = NetworkTable.getTable("Vision").getSubTable("Results");
     private final ArrayList<ImageHandler> imageHandlers = new ArrayList<>(1);
     private final CameraCapture camera;
     private final Thread processorThread = new Thread(new ProcessorThread());

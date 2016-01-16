@@ -16,7 +16,7 @@ import org.opencv.core.Core;
  */
 public final class OpenCVLoader {
 
-    private static final File[] OPENCV_SEARCH_PATHS = { new File("/usr/share/opencv/java") };
+    private static final File[] OPENCV_SEARCH_PATHS = { new File("lib/") };
 
     private static <T> T[] concat(T[] first, T[] second) {
         if (second != null) {
@@ -33,14 +33,33 @@ public final class OpenCVLoader {
     }
 
     public static void loadOpenCV(File[] additionalSearchPaths) {
-        String os_name = System.getProperty("os.name");
-        String extension = ".so";
+        String os_name = System.getProperty("os.name").toLowerCase();
+
+        String os;
+        String extension;
+        String arch;
+
+        if (System.getProperty("os.arch").contains("64")) {
+            arch = "x86_64";
+        } else {
+            arch = "x86";
+        }
+
+        if (os_name.contains("linux")) {
+            os = "linux";
+        } else if (os_name.contains("windows")) {
+            os = "windows";
+        } else {
+            throw new UnsatisfiedLinkError("Your OS is not set up to use OpenCV yet.");
+        }
 
         if (os_name.startsWith("Windows")) {
             extension = ".dll";
+        } else {
+            extension = ".so";
         }
 
-        String fileName = "lib" + Core.NATIVE_LIBRARY_NAME + extension;
+        String fileName = "lib" + Core.NATIVE_LIBRARY_NAME + "-" + os + "-" + arch + extension;
 
         File[] searchPaths = concat(OPENCV_SEARCH_PATHS, additionalSearchPaths);
         for (File path : searchPaths) {

@@ -4,28 +4,35 @@ buildscript {
   }
 }
 
+repositories {
+  maven {
+	url = "http://first.wpi.edu/FRC/roborio/maven/release"
+  }
+}
+
 apply plugin: 'java'
 apply plugin: 'eclipse'
 
+
+configurations {
+  compileOnly
+}
+
+sourceSets.main.compileClasspath += configurations.compileOnly
+
+eclipse {
+  classpath {
+    plusConfigurations += [configurations.compileOnly]
+  }
+}
+
 // This should not be changed without notifying everybody
-String opencvVersion = "2.4.12"
+String opencvVersion = "3.1.0"
 String opencvCode = opencvVersion.replace(".", "")
 
-// Add your own OpenCV location to the end of this list
-String[] opencvLocations = ['/usr/share/opencv/java/opencv-' + opencvCode + '.jar', 
-							'/usr/share/java/opencv.jar',
-							'/usr/local/Cellar/opencv/' + opencvVersion + '/share/OpenCV/java/opencv-' + opencvCode + '.jar']
-
-String opencvJar = opencvLocations.find {
-	return new File(it).exists()
-}
-
-if (opencvJar == null) {
-	throw new GradleException("OpenCV jar not found.")
-}
-
 dependencies {
-  compile files(opencvJar)
+  compile files('lib/opencv-310.jar')
+  compileOnly 'edu.wpi.first.wpilib.networktables.java:NetworkTables:+:desktop'
 }
 
 jar {

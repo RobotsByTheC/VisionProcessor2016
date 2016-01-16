@@ -6,10 +6,12 @@
  */
 package org.usfirst.frc.team2084.CMonster2015.vision.capture;
 
+import org.opencv.core.CvException;
 import org.opencv.core.Mat;
 import org.opencv.core.Size;
-import org.opencv.highgui.Highgui;
-import org.opencv.highgui.VideoCapture;
+import org.opencv.video.Video;
+import org.opencv.videoio.VideoCapture;
+import org.opencv.videoio.Videoio;
 
 /**
  * Captures images from a camera asynchronously. This allows applications to
@@ -36,6 +38,7 @@ public class CameraCapture {
                         synchronized (capture) {
                             // Grab the image outside of the image
                             // synchronization.
+
                             capture.grab();
                             synchronized (image) {
                                 // Copy grabbed image
@@ -53,19 +56,22 @@ public class CameraCapture {
                         }
                     } else {
                         synchronized (capture) {
-                            // Open either a device number or filename.
-                            if (filename == null) {
-                                if (capture.open(device)) {
-                                    connected = true;
+                            try {
+                                // Open either a device number or filename.
+                                if (filename == null) {
+                                    if (capture.open(device)) {
+                                        connected = true;
+                                    }
+                                } else {
+                                    if (capture.open(filename)) {
+                                        connected = true;
+                                    }
                                 }
-                            } else {
-                                if (capture.open(filename)) {
-                                    connected = true;
-                                }
+                                // Set the properties of the camera.
+                                setResolution(resolution);
+                                setFPS(fps);
+                            } catch (CvException ex) {
                             }
-                            // Set the properties of the camera.
-                            setResolution(resolution);
-                            setFPS(fps);
                         }
 
                         if (!connected) {
@@ -244,8 +250,8 @@ public class CameraCapture {
             // Update the resolution from the camera. This won't work if the
             // camera is not opened, so its in an if statement.
             synchronized (capture) {
-                double width = capture.get(Highgui.CV_CAP_PROP_FRAME_WIDTH);
-                double height = capture.get(Highgui.CV_CAP_PROP_FRAME_HEIGHT);
+                double width = capture.get(Videoio.CV_CAP_PROP_FRAME_WIDTH);
+                double height = capture.get(Videoio.CV_CAP_PROP_FRAME_HEIGHT);
                 resolution = new Size(width, height);
             }
         }
@@ -266,15 +272,15 @@ public class CameraCapture {
         // camera settings.
         if (running && resolution != null) {
             synchronized (capture) {
-                capture.set(Highgui.CV_CAP_PROP_FRAME_WIDTH, resolution.width);
-                capture.set(Highgui.CV_CAP_PROP_FRAME_HEIGHT, resolution.height);
+                capture.set(Videoio.CV_CAP_PROP_FRAME_WIDTH, resolution.width);
+                capture.set(Videoio.CV_CAP_PROP_FRAME_HEIGHT, resolution.height);
                 // If the values did not change, it failed, so print a message.
                 // The set() method is supposed to return false when it fails,
                 // but it doesn't work reliably.
-                if (capture.get(Highgui.CV_CAP_PROP_FRAME_WIDTH) != resolution.width) {
+                if (capture.get(Videoio.CV_CAP_PROP_FRAME_WIDTH) != resolution.width) {
                     System.out.println("Warning: Failed to set frame width.");
                 }
-                if (capture.get(Highgui.CV_CAP_PROP_FRAME_HEIGHT) != resolution.height) {
+                if (capture.get(Videoio.CV_CAP_PROP_FRAME_HEIGHT) != resolution.height) {
                     System.out.println("Warning: Failed to set frame height.");
                 }
             }

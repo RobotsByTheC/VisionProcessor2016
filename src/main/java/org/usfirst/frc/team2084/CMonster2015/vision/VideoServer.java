@@ -7,19 +7,19 @@
 package org.usfirst.frc.team2084.CMonster2015.vision;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.SocketException;
+import java.net.StandardSocketOptions;
+import java.nio.ByteBuffer;
+import java.nio.channels.AsynchronousServerSocketChannel;
+import java.nio.channels.AsynchronousSocketChannel;
+import java.nio.channels.CompletionHandler;
 import java.util.ArrayList;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 import javax.imageio.ImageIO;
 
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfByte;
-import org.opencv.core.MatOfInt;
-import org.opencv.highgui.Highgui;
 
 /**
  * Serves a Motion JPEG image over HTTP. It supports multiple simultaneous
@@ -33,49 +33,41 @@ public class VideoServer {
      * Listens for connections on the server port. This thread sends an HTTP
      * header to each client and them adds them to the streaming list.
      */
-    private class ServerThread implements Runnable {
+    private void acceptConnection(AsynchronousSocketChannel clientSocket) {
+        HEADER.rewind();
+        try {
+            clientSocket.setOption(StandardSocketOptions.SO_SNDBUF, 0);
+        } catch (IOException e2) {
+            e2.printStackTrace();
+        }
+        clientSocket.write(HEADER, null, new CompletionHandler<Integer, Void>() {
 
-        @Override
-        public void run() {
-            while (true) {
-                if (running) {
-                    try {
-                        Socket clientSocket = serverSocket.accept();
-                        // Give the client into its own thread and send the
-                        // header.
-                        new Thread(() -> {
-                            try {
-                                OutputStream clientWriteStream = clientSocket.getOutputStream();
-                                clientWriteStream.write(HEADER);
-                                synchronized (clientStreams) {
-                                    clientStreams.add(clientWriteStream);
-                                }
-                            } catch (SocketException se) {
-                            } catch (IOException e) {
-                                System.out.println("Unable to communicate with client: " + e);
-                            }
-                        }).start();
-                    } catch (IOException e) {
-                        System.out.println("Unable to accept connection to video server: " + e);
-                    }
-                } else {
-                    synchronized (serverThread) {
-                        try {
-                            serverThread.wait();
-                        } catch (InterruptedException e) {
-                        }
-                    }
+            @Override
+            public void completed(Integer result, Void attachment) {
+                synchronized (clientSockets) {
+                    clientSockets.add(clientSocket);
+                    clientSocketFutures.add(null);
                 }
             }
-        }
+
+            @Override
+            public void failed(Throwable e, Void attachment) {
+                System.out.println("Unable to communicate with client: " + e);
+                try {
+                    clientSocket.close();
+                } catch (IOException e1) {
+                    System.out.println("Unable to close connection: " + e);
+                }
+            }
+        });
     }
 
     /**
      * The header that is initially sent when a client connects.
      */
-    private static final byte[] HEADER = ("HTTP/1.0 200 OK\r\n" +
+    private static final ByteBuffer HEADER = ByteBuffer.wrap(("HTTP/1.0 200 OK\r\n" +
             "Server: VideoStreamer\r\n" +
-            "Content-Type: multipart/x-mixed-replace;boundary=jpgbound\r\n").getBytes();
+            "Content-Type: multipart/x-mixed-replace;boundary=jpgbound\r\n").getBytes());
 
     /**
      * The content type that is sent to the client before each image.
@@ -93,30 +85,28 @@ public class VideoServer {
     /**
      * Matrix that hold the JPEG quality parameters.
      */
-    private final MatOfInt qualityParams;
+    // private final MatOfInt qualityParams;
     /**
      * Socket that listens for connections.
      */
-    private ServerSocket serverSocket;
-    /**
-     * Thread that handles incoming connections.
-     */
-    private final Thread serverThread = new Thread(new ServerThread(), "Video Server Thread");
+    private AsynchronousServerSocketChannel serverSocket;
+
     /**
      * List of streams for currently connected clients.
      */
-    private final ArrayList<OutputStream> clientStreams = new ArrayList<>(1);
+    private final ArrayList<AsynchronousSocketChannel> clientSockets = new ArrayList<>(2);
+    private final ArrayList<Future<Integer>> clientSocketFutures = new ArrayList<>(1);
 
     /**
      * Buffer that holds the JPEG data.
      */
-    private final MatOfByte compressionBuffer = new MatOfByte();
+    // private final MatOfByte compressionBuffer = new MatOfByte();
 
     /**
      * Buffer that holds the same data as {@link #compressionBuffer}, but as a
      * Java data type.
      */
-    private byte[] socketBuffer = new byte[0];
+    // private byte[] socketBuffer = new byte[0];
 
     /**
      * Flag indicating that the server is running.
@@ -124,6 +114,9 @@ public class VideoServer {
     private boolean running;
 
     private final ImageConvertor convertor = new ImageConvertor();
+
+    private NakedByteArrayOutputStream responseBufferOutputStream = new NakedByteArrayOutputStream();
+    private NakedByteArrayOutputStream imageOutputStream = new NakedByteArrayOutputStream();
 
     /**
      * Creates a new {@link VideoServer} that listens on the specified port and
@@ -137,8 +130,11 @@ public class VideoServer {
      */
     public VideoServer(int port, int quality) throws IOException {
         this.port = port;
-        qualityParams = new MatOfInt(Highgui.IMWRITE_JPEG_QUALITY, quality);
-        serverSocket = new ServerSocket();
+        responseBufferOutputStream.write(BOUNDARY);
+        responseBufferOutputStream.write(CONTENT_TYPE);
+        responseBufferOutputStream.mark();
+
+        // qualityParams = new MatOfInt(Highgui.IMWRITE_JPEG_QUALITY, quality);
     }
 
     /**
@@ -161,21 +157,26 @@ public class VideoServer {
     public void start() throws IOException {
         // Do nothing if already running.
         if (!running) {
-            if (serverSocket.isClosed()) {
-                serverSocket = new ServerSocket();
+            if (serverSocket == null || !serverSocket.isOpen()) {
+                serverSocket = AsynchronousServerSocketChannel.open().bind(
+                        new InetSocketAddress(8080));
+                serverSocket.accept(null, new CompletionHandler<AsynchronousSocketChannel, Void>() {
+
+                    @Override
+                    public void completed(AsynchronousSocketChannel result, Void attachment) {
+                        acceptConnection(result);
+                        if (running) {
+                            serverSocket.accept(null, this);
+                        }
+                    }
+
+                    @Override
+                    public void failed(Throwable exc, Void attachment) {
+                    }
+                });
             }
-            serverSocket.bind(new InetSocketAddress(port));
 
             running = true;
-            // If the thread has already been started, tell it to resume.
-            if (serverThread.isAlive()) {
-                synchronized (serverThread) {
-                    serverThread.notify();
-                }
-            } else {
-                // Otherwise, start it.
-                serverThread.start();
-            }
         }
     }
 
@@ -204,33 +205,52 @@ public class VideoServer {
 
         if (running) {
             // Only send if at least one client is connected.
-            if (!clientStreams.isEmpty()) {
+            if (!clientSockets.isEmpty()) {
                 // Encode the image as a JPEG.
                 // TODO: Figure out why imencode is broken
                 // Highgui.imencode(".jpg", image, compressionBuffer,
                 // qualityParams);
-                int size = (int) compressionBuffer.total() * compressionBuffer.channels();
+                // int size = (int) compressionBuffer.total() *
+                // compressionBuffer.channels();
                 // // Resize the Java buffer to fit the data if necessary
                 // if (size > socketBuffer.length) {
                 // socketBuffer = new byte[size];
                 // }
                 // Copy the OpenCV data to a Java byte[].
                 // compressionBuffer.get(0, 0, socketBuffer);
-                synchronized (clientStreams) {
+                responseBufferOutputStream.reset();
+
+                // Encode image as jpeg
+                imageOutputStream.reset();
+                ImageIO.write(convertor.toBufferedImage(image), "jpg", imageOutputStream);
+
+                int size = imageOutputStream.size();
+
+                // Reset response buffer to the end of the header
+                responseBufferOutputStream.markReset();
+                // Write content length
+                responseBufferOutputStream.write(("Content-Length: " + size +
+                        "\r\n\r\n").getBytes());
+                // Write image to response buffer
+                responseBufferOutputStream.write(imageOutputStream.getBuffer());
+                synchronized (clientSockets) {
                     // Send to all clients.
-                    for (int i = 0; i < clientStreams.size(); i++) {
-                        OutputStream cs = clientStreams.get(i);
-                        try {
-                            // Write image boundary.
-                            cs.write(BOUNDARY);
-                            // Write content type.
-                            cs.write(CONTENT_TYPE);
-                            // Write content length.
-                            cs.write(("Content-Length: " + size + "\r\n\r\n").getBytes());
-                            // Write the actual image.
-                            ImageIO.write(convertor.toBufferedImage(image), "jpg", cs);
-                        } catch (IOException ex) {
-                            clientStreams.remove(i);
+                    for (int i = 0; i < clientSockets.size(); i++) {
+                        AsynchronousSocketChannel cs = clientSockets.get(i);
+                        Future<Integer> future = clientSocketFutures.get(i);
+                        if (future == null || future.isDone()) {
+                            try {
+                                if (future != null) {
+                                    future.get();
+                                }
+                                System.out.println("Write frame");
+                                clientSocketFutures.set(i, cs.write(
+                                        ByteBuffer.wrap(responseBufferOutputStream.toByteArray())));
+                            } catch (InterruptedException | ExecutionException ex) {
+                                cs.close();
+                                clientSocketFutures.remove(i);
+                                clientSockets.remove(i);
+                            }
                         }
                     }
                 }

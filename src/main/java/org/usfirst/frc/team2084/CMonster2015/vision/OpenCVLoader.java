@@ -47,20 +47,18 @@ public final class OpenCVLoader {
 
         if (os_name.contains("linux")) {
             os = "linux";
+            extension = ".so";
         } else if (os_name.contains("windows")) {
             os = "windows";
+            extension = ".dll";
         } else {
             throw new UnsatisfiedLinkError("Your OS is not set up to use OpenCV yet.");
         }
 
-        if (os_name.startsWith("Windows")) {
-            extension = ".dll";
-        } else {
-            extension = ".so";
-        }
+        String fileName = Core.NATIVE_LIBRARY_NAME + "-" + os + "-" + arch + extension;
 
-        String fileName = "lib" + Core.NATIVE_LIBRARY_NAME + "-" + os + "-" + arch + extension;
-
+        System.out.println(fileName);
+        
         File[] searchPaths = concat(OPENCV_SEARCH_PATHS, additionalSearchPaths);
         for (File path : searchPaths) {
             path = new File(path, fileName);

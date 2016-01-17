@@ -20,6 +20,9 @@ import java.util.concurrent.Future;
 import javax.imageio.ImageIO;
 
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfByte;
+import org.opencv.core.MatOfInt;
+import org.opencv.imgcodecs.Imgcodecs;
 
 /**
  * Serves a Motion JPEG image over HTTP. It supports multiple simultaneous
@@ -67,6 +70,8 @@ public class VideoServer {
      */
     private static final ByteBuffer HEADER = ByteBuffer.wrap(("HTTP/1.0 200 OK\r\n" +
             "Server: VideoStreamer\r\n" +
+            "Cache-Control: no-cache\r\n" +
+            "Cache-Control: private\r\n" +
             "Content-Type: multipart/x-mixed-replace;boundary=jpgbound\r\n").getBytes());
 
     /**
@@ -85,7 +90,8 @@ public class VideoServer {
     /**
      * Matrix that hold the JPEG quality parameters.
      */
-    // private final MatOfInt qualityParams;
+    private final MatOfInt qualityParams;
+
     /**
      * Socket that listens for connections.
      */
@@ -100,23 +106,20 @@ public class VideoServer {
     /**
      * Buffer that holds the JPEG data.
      */
-    // private final MatOfByte compressionBuffer = new MatOfByte();
+    private final MatOfByte compressionBuffer = new MatOfByte();
 
     /**
      * Buffer that holds the same data as {@link #compressionBuffer}, but as a
      * Java data type.
      */
-    // private byte[] socketBuffer = new byte[0];
+    private byte[] socketBuffer = new byte[0];
 
     /**
      * Flag indicating that the server is running.
      */
     private boolean running;
 
-    private final ImageConvertor convertor = new ImageConvertor();
-
     private NakedByteArrayOutputStream responseBufferOutputStream = new NakedByteArrayOutputStream();
-    private NakedByteArrayOutputStream imageOutputStream = new NakedByteArrayOutputStream();
 
     /**
      * Creates a new {@link VideoServer} that listens on the specified port and
@@ -134,7 +137,7 @@ public class VideoServer {
         responseBufferOutputStream.write(CONTENT_TYPE);
         responseBufferOutputStream.mark();
 
-        // qualityParams = new MatOfInt(Highgui.IMWRITE_JPEG_QUALITY, quality);
+        qualityParams = new MatOfInt(Imgcodecs.IMWRITE_JPEG_QUALITY, quality);
     }
 
     /**
@@ -159,7 +162,7 @@ public class VideoServer {
         if (!running) {
             if (serverSocket == null || !serverSocket.isOpen()) {
                 serverSocket = AsynchronousServerSocketChannel.open().bind(
-                        new InetSocketAddress(8080));
+                        new InetSocketAddress(port));
                 serverSocket.accept(null, new CompletionHandler<AsynchronousSocketChannel, Void>() {
 
                     @Override
@@ -207,24 +210,17 @@ public class VideoServer {
             // Only send if at least one client is connected.
             if (!clientSockets.isEmpty()) {
                 // Encode the image as a JPEG.
-                // TODO: Figure out why imencode is broken
-                // Highgui.imencode(".jpg", image, compressionBuffer,
-                // qualityParams);
-                // int size = (int) compressionBuffer.total() *
-                // compressionBuffer.channels();
-                // // Resize the Java buffer to fit the data if necessary
-                // if (size > socketBuffer.length) {
-                // socketBuffer = new byte[size];
-                // }
+                Imgcodecs.imencode(".jpg", image, compressionBuffer,
+                        qualityParams);
+                int size = (int) compressionBuffer.total() *
+                        compressionBuffer.channels();
+                // Resize the Java buffer to fit the data if necessary
+                if (size > socketBuffer.length) {
+                    socketBuffer = new byte[size];
+                }
                 // Copy the OpenCV data to a Java byte[].
-                // compressionBuffer.get(0, 0, socketBuffer);
+                compressionBuffer.get(0, 0, socketBuffer);
                 responseBufferOutputStream.reset();
-
-                // Encode image as jpeg
-                imageOutputStream.reset();
-                ImageIO.write(convertor.toBufferedImage(image), "jpg", imageOutputStream);
-
-                int size = imageOutputStream.size();
 
                 // Reset response buffer to the end of the header
                 responseBufferOutputStream.markReset();
@@ -232,7 +228,7 @@ public class VideoServer {
                 responseBufferOutputStream.write(("Content-Length: " + size +
                         "\r\n\r\n").getBytes());
                 // Write image to response buffer
-                responseBufferOutputStream.write(imageOutputStream.getBuffer());
+                responseBufferOutputStream.write(socketBuffer, 0, size);
                 synchronized (clientSockets) {
                     // Send to all clients.
                     for (int i = 0; i < clientSockets.size(); i++) {
@@ -243,7 +239,6 @@ public class VideoServer {
                                 if (future != null) {
                                     future.get();
                                 }
-                                System.out.println("Write frame");
                                 clientSocketFutures.set(i, cs.write(
                                         ByteBuffer.wrap(responseBufferOutputStream.toByteArray())));
                             } catch (InterruptedException | ExecutionException ex) {

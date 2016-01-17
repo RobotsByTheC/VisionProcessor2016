@@ -17,8 +17,6 @@ import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-import javax.imageio.ImageIO;
-
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
 import org.opencv.core.MatOfInt;
@@ -55,11 +53,11 @@ public class VideoServer {
 
             @Override
             public void failed(Throwable e, Void attachment) {
-                System.out.println("Unable to communicate with client: " + e);
+                System.err.println("Unable to communicate with client: " + e);
                 try {
                     clientSocket.close();
                 } catch (IOException e1) {
-                    System.out.println("Unable to close connection: " + e);
+                    System.err.println("Unable to close connection: " + e);
                 }
             }
         });

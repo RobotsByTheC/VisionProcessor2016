@@ -13,7 +13,7 @@ import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 
 /**
- * @author ben
+ * @author Ben Wolsieffer
  */
 public final class ImageConvertor {
 
@@ -21,6 +21,7 @@ public final class ImageConvertor {
     }
 
     private BufferedImage javaImage;
+    private final Mat mat = new Mat();
 
     public BufferedImage toBufferedImage(Mat image) {
         int width = image.width();
@@ -29,13 +30,27 @@ public final class ImageConvertor {
         // Get BufferedImage type
         int javaType = toJavaImageType(type);
         // If the Mat does not match the BufferedImage, create a new one.
-        if (javaImage == null || width != javaImage.getWidth() || height != javaImage.getHeight()
-                || javaType != javaImage.getType()) {
+        if (javaImage == null || width != javaImage.getWidth() || height != javaImage.getHeight() || javaType != javaImage.getType()) {
             javaImage = new BufferedImage(width, height, javaType);
         }
         // Copy Mat data to BufferedImage
         image.get(0, 0, ((DataBufferByte) javaImage.getRaster().getDataBuffer()).getData());
         return javaImage;
+    }
+
+    public Mat toMat(BufferedImage image) {
+        int width = image.getWidth();
+        int height = image.getHeight();
+        int type = image.getType();
+        // Get Mat type
+        int cvType = toCVImageType(type);
+        // If the Mat does not match the BufferedImage, create a new one.
+        if ( width != mat.width() || height != mat.height() || cvType != image.getType()) {
+            mat.create(height, width, cvType);
+        }
+        // Copy BufferedImage data to Mat
+        mat.put(0, 0, ((DataBufferByte) image.getRaster().getDataBuffer()).getData());
+        return mat;
     }
 
     /**
@@ -53,6 +68,23 @@ public final class ImageConvertor {
             return BufferedImage.TYPE_BYTE_GRAY;
         } else {
             return BufferedImage.TYPE_CUSTOM;
+        }
+    }
+
+    /**
+     * Convert an {@link BufferedImage} type code to a {@link Mat} type. This
+     * assumes a BGR or grayscale color model for the {@link BufferedImage}.
+     * 
+     * @param javaImageType the {@link BufferedImage} type
+     * @return the {@link Mat} type
+     */
+    private static int toCVImageType(int javaImageType) {
+        if (javaImageType == BufferedImage.TYPE_3BYTE_BGR) {
+            return CvType.CV_8UC3;
+        } else if (javaImageType == BufferedImage.TYPE_BYTE_GRAY) {
+            return CvType.CV_8UC1;
+        } else {
+            return CvType.CV_USRTYPE1;
         }
     }
 }

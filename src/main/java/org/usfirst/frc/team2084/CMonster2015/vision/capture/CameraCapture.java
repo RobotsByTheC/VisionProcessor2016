@@ -9,7 +9,6 @@ package org.usfirst.frc.team2084.CMonster2015.vision.capture;
 import org.opencv.core.CvException;
 import org.opencv.core.Mat;
 import org.opencv.core.Size;
-import org.opencv.video.Video;
 import org.opencv.videoio.VideoCapture;
 import org.opencv.videoio.Videoio;
 
@@ -29,30 +28,39 @@ public class CameraCapture {
      */
     private class CaptureThread implements Runnable {
 
+        private final Mat retrievedImage = new Mat();
+
         @Override
         public void run() {
             while (true) {
                 // If the camera is running, capture an image.
                 if (running) {
                     if (connected) {
+                        boolean retrievedNewImage = false;
+
                         synchronized (capture) {
                             // Grab the image outside of the image
                             // synchronization.
-
                             capture.grab();
-                            synchronized (image) {
-                                // Copy grabbed image
-                                if (!capture.retrieve(image)) {
-                                    connected = false;
-                                } else {
-                                    // If it succeeded, set the newImage flag.
-                                    newImage = true;
-                                }
+                            // Copy grabbed image
+                            if (!capture.retrieve(retrievedImage)) {
+                                connected = false;
+                            } else {
+                                // If it succeeded, set the newImage flag.
+                                retrievedNewImage = true;
                             }
+
                         }
-                        // Notify the capture() method in case it was waiting.
-                        synchronized (imageNotifier) {
-                            imageNotifier.notify();
+                        if (retrievedNewImage) {
+                            synchronized (image) {
+                                retrievedImage.copyTo(image);
+                            }
+                            newImage = true;
+                            // Notify the capture() method in case it was
+                            // waiting.
+                            synchronized (imageNotifier) {
+                                imageNotifier.notify();
+                            }
                         }
                     } else {
                         synchronized (capture) {
@@ -71,6 +79,7 @@ public class CameraCapture {
                                 setResolution(resolution);
                                 setFPS(fps);
                             } catch (CvException ex) {
+                                System.out.println("Failed to connect to camera: " + ex);
                             }
                         }
 
@@ -162,6 +171,7 @@ public class CameraCapture {
      */
     public CameraCapture(String filename) {
         this.filename = filename;
+        captureThread.setDaemon(true);
     }
 
     /**
@@ -170,16 +180,21 @@ public class CameraCapture {
     public void start() {
         // Do nothing if already running.
         if (!running) {
-            // If the thread has already been started, tell it to resume.
-            if (captureThread.isAlive()) {
-                synchronized (captureThread) {
-                    captureThread.notify();
+            try {
+                running = true;
+                // If the thread has already been started, tell it to resume.
+                if (captureThread.isAlive()) {
+                    synchronized (captureThread) {
+                        captureThread.notify();
+                    }
+                } else {
+                    // Otherwise, start it.
+                    captureThread.start();
                 }
-            } else {
-                // Otherwise, start it.
-                captureThread.start();
+            } catch (Exception ex) {
+                running = false;
+                throw ex;
             }
-            running = true;
         }
     }
 
@@ -228,8 +243,7 @@ public class CameraCapture {
             }
 
             // Copy the new image to the parameter. This is synchronized to
-            // avoid possibly returning a half grabbed image, even though this
-            // is very unlikely.
+            // avoid possibly returning a half grabbed image.
             synchronized (this.image) {
                 newImage = false;
                 this.image.copyTo(image);

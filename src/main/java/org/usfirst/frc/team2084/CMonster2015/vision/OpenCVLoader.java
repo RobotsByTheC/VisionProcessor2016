@@ -31,7 +31,7 @@ public final class OpenCVLoader {
     public static void loadOpenCV() {
         loadOpenCV(null);
     }
-
+    
     public static void loadOpenCV(File[] additionalSearchPaths) {
         String os_name = System.getProperty("os.name").toLowerCase();
 
@@ -57,8 +57,8 @@ public final class OpenCVLoader {
 
         String fileName = Core.NATIVE_LIBRARY_NAME + "-" + os + "-" + arch + extension;
 
-        System.out.println(fileName);
-        
+        System.out.println("Looking for OpenCV library: " + fileName);
+
         File[] searchPaths = concat(OPENCV_SEARCH_PATHS, additionalSearchPaths);
         for (File path : searchPaths) {
             path = new File(path, fileName);

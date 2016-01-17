@@ -6,8 +6,6 @@
  */
 package org.usfirst.frc.team2084.CMonster2015.vision;
 
-import static org.usfirst.frc.team2084.CMonster2015.vision.ScoreUtils.ratioToScore;
-
 import java.awt.Polygon;
 
 import org.opencv.core.CvType;

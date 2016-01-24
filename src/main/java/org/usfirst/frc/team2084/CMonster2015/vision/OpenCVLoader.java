@@ -31,18 +31,23 @@ public final class OpenCVLoader {
     public static void loadOpenCV() {
         loadOpenCV(null);
     }
-    
+
     public static void loadOpenCV(File[] additionalSearchPaths) {
         String os_name = System.getProperty("os.name").toLowerCase();
+        String os_arch = System.getProperty("os.arch").toLowerCase();
 
         String os;
         String extension;
         String arch;
 
-        if (System.getProperty("os.arch").contains("64")) {
-            arch = "x86_64";
+        if (os_arch.contains("arm")) {
+            arch = os_arch;
         } else {
-            arch = "x86";
+            if (os_arch.contains("64")) {
+                arch = "x86_64";
+            } else {
+                arch = "x86";
+            }
         }
 
         if (os_name.contains("linux")) {

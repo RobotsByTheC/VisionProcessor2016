@@ -16,7 +16,7 @@ import org.opencv.core.Core;
  */
 public final class OpenCVLoader {
 
-    private static final File[] OPENCV_SEARCH_PATHS = { new File("lib/") };
+    private static final File[] OPENCV_SEARCH_PATHS = { new File("lib/"), new File("..VisionProcessor2016/"), new File("./")};
 
     private static <T> T[] concat(T[] first, T[] second) {
         if (second != null) {

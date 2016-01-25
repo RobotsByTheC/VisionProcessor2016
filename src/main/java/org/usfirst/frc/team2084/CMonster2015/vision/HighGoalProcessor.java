@@ -11,6 +11,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import javax.imageio.ImageIO;
@@ -21,9 +22,6 @@ import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
 import org.opencv.core.MatOfInt;
 import org.opencv.core.MatOfPoint;
-import org.opencv.core.MatOfPoint2f;
-import org.opencv.core.RotatedRect;
-import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
@@ -35,6 +33,7 @@ import org.usfirst.frc.team2084.CMonster2015.vision.capture.CameraCapture;
  */
 public class HighGoalProcessor extends VisionProcessor {
 
+    public static final double FOV_ANGLE = Math.toRadians(64.94);
     public static final Size IMAGE_SIZE = new Size(640, 480);
 
     /**
@@ -48,44 +47,33 @@ public class HighGoalProcessor extends VisionProcessor {
         }
     }
 
-    private static final Scalar TARGET_COLOR = new Scalar(255, 255, 255);
-
-    private final FramerateCounter fps = new FramerateCounter();
-
     public void init() {
     }
 
     public void process(Mat image, Mat outImage) {
-
-        boolean autonomousRunning = VisionResults.isAutonomousVisionRunning();
-
         // Convert the image to HSV, threshold it and find contours
         List<MatOfPoint> contours = findContours(threshold(convertToHsv(image)));
 
         // Array to hold blobs that possibly could be targets
         ArrayList<Target> possibleTargets = new ArrayList<>();
 
-        ArrayList<MatOfPoint> quads = new ArrayList<>();
-        
         // Convert the contours to Targets
         contours.stream().forEach(
                 (contour) -> {
                     contour = convexHull(contour);
-                    if (Imgproc.contourArea(contour) > VisionParameters.getMinBlobArea()) {
-                        Target target = new Target(contour);
+                    Target target = new Target(contour);
+                    if (target.isValid()) {
                         possibleTargets.add(target);
-                        
-                        quads.add(target.getQuad());
                     }
                 });
-
-        Imgproc.polylines(outImage, quads, true, TARGET_COLOR);
         
-        debugImage("Threshold Image", thresholdImage);
+        Collections.sort(possibleTargets);
 
-        // Core.putText(outImage, Double.toString(fps.update()), new
-        // Point(0,0),
-        // Core.FONT_HERSHEY_SIMPLEX, 1.0, OTHER_TARGET_COLOR);
+        if (!possibleTargets.isEmpty()) {
+            possibleTargets.get(possibleTargets.size() - 1).draw(outImage);
+        }
+
+        debugImage("Threshold Image", thresholdImage);
 
     }
 
@@ -138,14 +126,6 @@ public class HighGoalProcessor extends VisionProcessor {
         Imgproc.findContours(contoursImage, contours, hierarchy, Imgproc.RETR_EXTERNAL,
                 Imgproc.CHAIN_APPROX_SIMPLE);
         return contours;
-    }
-
-    private RotatedRect getRectangle(MatOfPoint contour) {
-        MatOfPoint2f poly = new MatOfPoint2f();
-        MatOfPoint2f fContour = new MatOfPoint2f();
-        contour.convertTo(fContour, CvType.CV_32F);
-
-        return Imgproc.minAreaRect(fContour);
     }
 
     private MatOfPoint convexHull(MatOfPoint contour) {

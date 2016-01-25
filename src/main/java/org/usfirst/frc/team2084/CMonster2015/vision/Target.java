@@ -6,14 +6,25 @@
  */
 package org.usfirst.frc.team2084.CMonster2015.vision;
 
-import java.awt.Polygon;
+import static org.usfirst.frc.team2084.CMonster2015.vision.ScoreUtils.ratioToScore;
 
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.SortedMap;
+import java.util.TreeMap;
+
+import org.opencv.core.Core;
 import org.opencv.core.CvType;
+import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.RotatedRect;
+import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
+import org.opencv.imgproc.Moments;
 
 /**
  * An object that represents a potential target. It runs a number of tests to
@@ -21,33 +32,33 @@ import org.opencv.imgproc.Imgproc;
  *
  * @author Ben Wolsieffer
  */
-public class Target {
+public class Target implements Comparable<Target> {
+
+    private static final Scalar DRAW_COLOR = new Scalar(255, 255, 255);
+    private static final int DRAW_THICKNESS = 3;
 
     /**
      * The number of tests that produce a score. Used for calculating the
      * average score.
      */
-    private static final int NUM_SCORES = 2;
+    private static final int NUM_SCORES = 1;
+
+    public static final double TARGET_WIDTH = 20;
+    public static final double TARGET_HEIGHT = 14;
 
     /**
      * The ideal aspect ratio for the static (vertical) target.
      */
-    public static final double TARGET_ASPECT_RATIO = 4.0 / 32.0;
+    public static final double TARGET_ASPECT_RATIO = TARGET_WIDTH / TARGET_HEIGHT;
 
-    /**
-     * The minimum rectangularity score a blob can have to be considered a
-     * target.
-     */
-    public static double MIN_RECTANGULARITY_SCORE = 10;
     /**
      * The minimum aspect ratio score a blob can have to be considered a target.
      */
     public static double MIN_ASPECT_RATIO_SCORE = 10;
 
-    /**
-     * The shape of the blob that was found by OpenCV.
-     */
-    private final MatOfPoint quad;
+    private final MatOfPoint contour;
+
+    private MatOfPoint corners;
 
     /**
      * The score of this target.
@@ -58,6 +69,20 @@ public class Target {
      */
     private boolean valid = true;
 
+    private Point topLeft;
+    private Point topRight;
+    private Point bottomLeft;
+    private Point bottomRight;
+
+    private Point center;
+
+    private double width;
+    private double height;
+
+    private double area;
+
+    private double distance;
+
     /**
      * Creates a new possible target based on the specified blob and calculates
      * its score.
@@ -65,68 +90,104 @@ public class Target {
      * @param p the shape of the possible target
      */
     public Target(MatOfPoint contour) {
+        // Simplify contour to make the corner finding algorithm work better
         MatOfPoint2f fContour = new MatOfPoint2f();
         contour.convertTo(fContour, CvType.CV_32F);
-        
         Imgproc.approxPolyDP(fContour, fContour, VisionParameters.getApproxPolyEpsilon(), true);
-        
-        RotatedRect rect = Imgproc.minAreaRect(fContour);
-        
         fContour.convertTo(contour, CvType.CV_32S);
-        
-        Point[] rectPoints = new Point[4];
-        rect.points(rectPoints);
 
-        for (int j = 0; j < rectPoints.length; j++) {
-            Point rectPoint = rectPoints[j];
+        this.contour = contour;
 
-            double minDistance = Double.MAX_VALUE;
-            Point point = null;
+        // Validate target
+        if (validateArea()) {
 
-            for (int i = 0; i < contour.rows(); i++) {
-                Point contourPoint = new Point(contour.get(i, 0));
-                double dist = distance(rectPoint, contourPoint);
-                if (dist < minDistance) {
-                    minDistance = dist;
-                    point = contourPoint;
+            // Find a bounding rectangle
+            RotatedRect rect = Imgproc.minAreaRect(fContour);
+
+            Point[] rectPoints = new Point[4];
+            rect.points(rectPoints);
+
+            for (int j = 0; j < rectPoints.length; j++) {
+                Point rectPoint = rectPoints[j];
+
+                double minDistance = Double.MAX_VALUE;
+                Point point = null;
+
+                for (int i = 0; i < contour.rows(); i++) {
+                    Point contourPoint = new Point(contour.get(i, 0));
+                    double dist = distance(rectPoint, contourPoint);
+                    if (dist < minDistance) {
+                        minDistance = dist;
+                        point = contourPoint;
+                    }
+                }
+
+                rectPoints[j] = point;
+            }
+            corners = new MatOfPoint(rectPoints);
+
+            SortedMap<Double, List<Point>> x = new TreeMap<>();
+            Arrays.stream(rectPoints).forEach((p) -> {
+                List<Point> points;
+                if ((points = x.get(p.x)) == null) {
+                    x.put(p.x, points = new LinkedList<>());
+                }
+                points.add(p);
+            });
+
+            int i = 0;
+            for (Iterator<List<Point>> it = x.values().iterator(); it.hasNext();) {
+                List<Point> s = it.next();
+
+                for (Point p : s) {
+                    switch (i) {
+                    case 0:
+                        topLeft = p;
+                    break;
+                    case 1:
+                        bottomLeft = p;
+                    break;
+                    case 2:
+                        topRight = p;
+                    break;
+                    case 3:
+                        bottomRight = p;
+                    }
+                    i++;
                 }
             }
 
-            rectPoints[j] = point;
-        }
-        quad = new MatOfPoint(rectPoints);
+            if (topLeft.y > bottomLeft.y) {
+                Point p = bottomLeft;
+                bottomLeft = topLeft;
+                topLeft = p;
+            }
 
-        // score = calculateScore();
+            if (topRight.y > bottomRight.y) {
+                Point p = bottomRight;
+                bottomRight = topRight;
+                topRight = p;
+            }
+
+            Moments moments = Imgproc.moments(corners);
+            center = new Point(moments.m10 / moments.m00, moments.m01 / moments.m00);
+
+            width = (distance(topLeft, topRight) + distance(bottomLeft, bottomLeft)) / 2.0;
+            height = (distance(topLeft, bottomLeft) + distance(topRight, bottomRight)) / 2.0;
+
+            score = calculateScore();
+
+            distance = (TARGET_WIDTH * HighGoalProcessor.IMAGE_SIZE.width
+                    / (2 * width * Math.tan(HighGoalProcessor.FOV_ANGLE / 2))) / 12;
+        } else {
+            valid = false;
+        }
     }
 
     private static double distance(Point p1, Point p2) {
         double x = p1.x - p2.x;
         double y = p1.y - p2.y;
         return Math.sqrt(x * x + y * y);
-    }
-
-    private static RotatedRect getMinAreaRect(MatOfPoint contour) {
-        MatOfPoint2f fContour = new MatOfPoint2f();
-        contour.convertTo(fContour, CvType.CV_32F);
-        return Imgproc.minAreaRect(fContour);
-    }
-
-    /**
-     * Calculates the area of a polygon.
-     *
-     * @param p the polygon to perform the calculation on
-     * @return the area of the polygon
-     */
-    private static double getPolygonArea(Polygon p) {
-        int i, j;
-        double area = 0;
-        for (i = 0; i < p.npoints; i++) {
-            j = (i + 1) % p.npoints;
-            area += p.xpoints[i] * p.ypoints[j];
-            area -= p.ypoints[i] * p.xpoints[j];
-        }
-        area /= 2;
-        return (area < 0 ? -area : area);
     }
 
     /**
@@ -138,81 +199,73 @@ public class Target {
         return score;
     }
 
-    /**
-     * @return the quad
-     */
-    public MatOfPoint getQuad() {
-        return quad;
+    public void draw(Mat image) {
+        Imgproc.line(image, topLeft, topRight, DRAW_COLOR, DRAW_THICKNESS);
+        Imgproc.line(image, topRight, bottomRight, DRAW_COLOR, DRAW_THICKNESS);
+        Imgproc.line(image, bottomRight, bottomLeft, DRAW_COLOR, DRAW_THICKNESS);
+        Imgproc.line(image, bottomLeft, topLeft, DRAW_COLOR, DRAW_THICKNESS);
+
+        Imgproc.circle(image, center, 5, DRAW_COLOR);
+
+        Imgproc.putText(image, "distance: " + distance, new Point(0, HighGoalProcessor.IMAGE_SIZE.height), Core.FONT_HERSHEY_PLAIN, 1, DRAW_COLOR);
     }
 
-    // /**
-    // * Calculates this target's score. If the target is not valid, it returns
-    // 0.
-    // * This is called in the constructor.
-    // *
-    // * @return this target's score
-    // */
-    // private double calculateScore() {
-    // double lScore = (scoreRectangularity()
-    // + scoreAspectRatio()) / NUM_SCORES;
-    // return isValid() ? lScore : 0;
-    // }
-    //
-    // /**
-    // * Calculate the rectangularity score for this target. The rectangularity
-    // is
-    // * the ratio between the area of the polygon blob and its bounding
-    // * rectangle. This ratio is converted to a score using
-    // * {@link ScoreUtils#ratioToScore(double)}.
-    // *
-    // * @return this target's rectangularity score
-    // */
-    // private double scoreRectangularity() {
-    // double polyArea = getPolygonArea(shape);
-    // if (polyArea < MIN_AREA) {
-    // invalidate();
-    // }
-    // double lScore = ratioToScore(polyArea / (rect.width * rect.height));
-    // if (lScore < MIN_RECTANGULARITY_SCORE) {
-    // invalidate();
-    // }
-    // return lScore;
-    // }
-    //
-    // /**
-    // * Calculate the aspect ratio score for this target. This is calculated by
-    // * dividing the target's ratio by the target's ideal ratio. This ratio is
-    // * converted to a score using {@link ScoreUtils#ratioToScore(double)}.
-    // *
-    // * @return this target's rectangularity score
-    // */
-    // private double scoreAspectRatio() {
-    // double ratio = (double) rect.width / (double) rect.height;
-    // double ideal = TARGET_ASPECT_RATIO;
-    // double lScore = ratioToScore(ratio / ideal);
-    // if (lScore < MIN_ASPECT_RATIO_SCORE) {
-    // invalidate();
-    // }
-    // return lScore;
-    // }
-    //
-    // public MatOfPoint getShape() {
-    // return shape;
-    // }
-    //
-    // public RotatedRect getRectangle() {
-    // return rect;
-    // }
-    //
-    // private void invalidate() {
-    // valid = false;
-    // }
-    //
-    // public boolean isValid() {
-    // return valid;
-    // }
-    //
-    // public boolean isVertical() {
-    // return rect.width < rect.height;
-    // }
+    private boolean validateArea() {
+        return (area = Imgproc.contourArea(contour)) > VisionParameters.getMinBlobArea();
+    }
+
+    /**
+     * Calculates this target's score. If the target is not valid, it returns 0.
+     * This is called in the constructor.
+     *
+     * @return this target's score
+     */
+    private double calculateScore() {
+        double lScore = (scoreAspectRatio()) / NUM_SCORES;
+        return isValid() ? lScore : 0;
+    }
+
+    /**
+     * Calculate the aspect ratio score for this target. This is calculated by
+     * dividing the target's ratio by the target's ideal ratio. This ratio is
+     * converted to a score using {@link ScoreUtils#ratioToScore(double)}.
+     *
+     * @return this target's rectangularity score
+     */
+    private double scoreAspectRatio() {
+        double ratio = width / height;
+        double ideal = TARGET_ASPECT_RATIO;
+        double lScore = ratioToScore(ratio / ideal);
+        if (lScore < MIN_ASPECT_RATIO_SCORE) {
+            valid = false;
+        }
+        return lScore;
+    }
+
+    public MatOfPoint getContour() {
+        return contour;
+    }
+
+    public boolean isValid() {
+        return valid;
+    }
+
+    /**
+     * @return the area
+     */
+    public double getArea() {
+        return area;
+    }
+
+    /**
+     * @return the distance
+     */
+    public double getDistance() {
+        return distance;
+    }
+
+    @Override
+    public int compareTo(Target o) {
+        return (int) (score - o.score);
+    }
 }

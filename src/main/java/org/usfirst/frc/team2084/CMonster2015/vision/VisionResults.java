@@ -16,33 +16,45 @@ public class VisionResults {
 
     public static final ITable VISION_RESULTS = NetworkTable.getTable("Vision").getSubTable(
             "Results");
-    
-    public static final String TARGET_TABLE_STATE_KEY = "goal_hot";
-    public static final String TARGET_TABLE_AUTONOMOUS_VISION_RUNNING_KEY = "auto_vision";
+
+    public static final String HEADING_KEY = "heading";
+    public static final String GOAL_HEADING_KEY = "goal_heading";
+    public static final String SHOOTER_ANGLE_KEY = "shooter_angle";
+    public static final String GOAL_ANGLE_KEY = "goal_angle";
     public static final String TARGET_TABLE_ENABLE_CAMERA_KEY = "enable_camera";
 
-    public enum State {
-        HOT,
-        NOT_HOT,
-        UNKNOWN;
+    public static double getCurrentHeading() {
+        return VISION_RESULTS.getNumber(HEADING_KEY, 0);
     }
 
-    public static void setState(State state) {
-        VISION_RESULTS.putNumber(TARGET_TABLE_STATE_KEY, state.ordinal());
+    public static void setCurrentHeading(double heading) {
+        VISION_RESULTS.putNumber(HEADING_KEY, heading);
     }
 
-    public static State getState() {
-        return State.values()[(int) VISION_RESULTS.getNumber(TARGET_TABLE_STATE_KEY, State.UNKNOWN.ordinal())];
+    public static double getGoalHeading() {
+        return VISION_RESULTS.getNumber(GOAL_HEADING_KEY, 0);
     }
 
-    public static boolean isAutonomousVisionRunning() {
-        return VISION_RESULTS.getBoolean(TARGET_TABLE_AUTONOMOUS_VISION_RUNNING_KEY, false);
+    public static void setGoalHeading(double heading) {
+        VISION_RESULTS.putNumber(GOAL_HEADING_KEY, heading);
     }
 
-    public static void setAutonomousVisionRunning(boolean started) {
-        VISION_RESULTS.putBoolean(TARGET_TABLE_AUTONOMOUS_VISION_RUNNING_KEY, started);
+    public static double getShooterAngle() {
+        return VISION_RESULTS.getNumber(SHOOTER_ANGLE_KEY, 0);
     }
 
+    public static void setShooterAngle(double angle) {
+        VISION_RESULTS.putNumber(SHOOTER_ANGLE_KEY, angle);
+    }
+    
+    public static double getGoalAngle() {
+        return VISION_RESULTS.getNumber(GOAL_ANGLE_KEY, 0);
+    }
+
+    public static void setGoalAngle(double angle) {
+        VISION_RESULTS.putNumber(GOAL_ANGLE_KEY, angle);
+    }
+    
     public static void setCameraEnabled(boolean enabled) {
         VISION_RESULTS.putBoolean(TARGET_TABLE_ENABLE_CAMERA_KEY, enabled);
     }

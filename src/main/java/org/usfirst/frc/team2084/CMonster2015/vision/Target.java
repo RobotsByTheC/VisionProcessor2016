@@ -7,7 +7,10 @@
 package org.usfirst.frc.team2084.CMonster2015.vision;
 
 import static org.usfirst.frc.team2084.CMonster2015.vision.ScoreUtils.ratioToScore;
+import static org.usfirst.frc.team2084.CMonster2015.vision.VisionParameters.*;
 
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -34,17 +37,21 @@ import org.opencv.imgproc.Moments;
  */
 public class Target implements Comparable<Target> {
 
-    private static final Scalar DRAW_COLOR = new Scalar(255, 255, 255);
+    private static final Scalar TARGET_COLOR = new Scalar(0, 255, 0);
+    private static final Scalar OTHER_TARGET_COLOR = new Scalar(255, 255, 255);
+    private static final Scalar TEXT_COLOR = new Scalar(255, 255, 255);
+    private static final double TEXT_SIZE = 1.5;
     private static final int DRAW_THICKNESS = 3;
+    private static final NumberFormat numberFormat = new DecimalFormat("#0.0000");
 
     /**
      * The number of tests that produce a score. Used for calculating the
      * average score.
      */
-    private static final int NUM_SCORES = 1;
+    private static final int NUM_SCORES = 3;
 
-    public static final double TARGET_WIDTH = 20;
-    public static final double TARGET_HEIGHT = 14;
+    public static final double TARGET_WIDTH = 20.0 / 12.0;
+    public static final double TARGET_HEIGHT = 12.0 / 12.0;
 
     /**
      * The ideal aspect ratio for the static (vertical) target.
@@ -54,7 +61,9 @@ public class Target implements Comparable<Target> {
     /**
      * The minimum aspect ratio score a blob can have to be considered a target.
      */
-    public static double MIN_ASPECT_RATIO_SCORE = 10;
+    public static final double MIN_ASPECT_RATIO_SCORE = 0;
+    public static final double MIN_RECTANGULARITY_WIDTH_SCORE = 0;
+    public static final double MIN_RECTANGULARITY_HEIGHT_SCORE = 0;
 
     private final MatOfPoint contour;
 
@@ -75,13 +84,21 @@ public class Target implements Comparable<Target> {
     private Point bottomRight;
 
     private Point center;
+    private Point posFeet;
 
+    private double widthTop;
+    private double widthBottom;
     private double width;
+    private double heightLeft;
+    private double heightRight;
     private double height;
 
     private double area;
 
     private double distance;
+
+    private double xGoalAngle;
+    private double yGoalAngle;
 
     /**
      * Creates a new possible target based on the specified blob and calculates
@@ -157,6 +174,7 @@ public class Target implements Comparable<Target> {
                 }
             }
 
+            // Organize corners
             if (topLeft.y > bottomLeft.y) {
                 Point p = bottomLeft;
                 bottomLeft = topLeft;
@@ -172,13 +190,27 @@ public class Target implements Comparable<Target> {
             Moments moments = Imgproc.moments(corners);
             center = new Point(moments.m10 / moments.m00, moments.m01 / moments.m00);
 
-            width = (distance(topLeft, topRight) + distance(bottomLeft, bottomLeft)) / 2.0;
-            height = (distance(topLeft, bottomLeft) + distance(topRight, bottomRight)) / 2.0;
+            widthTop = distance(topLeft, topRight);
+            widthBottom = distance(bottomLeft, bottomRight);
+            width = (widthTop + widthBottom) / 2.0;
+            heightLeft = distance(topLeft, bottomLeft);
+            heightRight = distance(topRight, bottomRight);
+            height = (heightLeft + heightRight) / 2.0;
 
             score = calculateScore();
 
+            double pixelsToFeet = TARGET_WIDTH / width;
+
             distance = (TARGET_WIDTH * HighGoalProcessor.IMAGE_SIZE.width
-                    / (2 * width * Math.tan(HighGoalProcessor.FOV_ANGLE / 2))) / 12;
+                    / (2 * width * Math.tan(VisionParameters.getFOVAngle() / 2)));
+
+            double xPosFeet = (center.x - (HighGoalProcessor.IMAGE_SIZE.width / 2)) * pixelsToFeet;
+            double yPosFeet = -(center.y - (HighGoalProcessor.IMAGE_SIZE.height / 2)) * pixelsToFeet;
+
+            posFeet = new Point(xPosFeet, yPosFeet);
+
+            xGoalAngle = Math.atan(xPosFeet / distance);
+            yGoalAngle = Math.atan(yPosFeet / distance);
         } else {
             valid = false;
         }
@@ -200,14 +232,39 @@ public class Target implements Comparable<Target> {
     }
 
     public void draw(Mat image) {
-        Imgproc.line(image, topLeft, topRight, DRAW_COLOR, DRAW_THICKNESS);
-        Imgproc.line(image, topRight, bottomRight, DRAW_COLOR, DRAW_THICKNESS);
-        Imgproc.line(image, bottomRight, bottomLeft, DRAW_COLOR, DRAW_THICKNESS);
-        Imgproc.line(image, bottomLeft, topLeft, DRAW_COLOR, DRAW_THICKNESS);
+        draw(image, true);
+    }
 
-        Imgproc.circle(image, center, 5, DRAW_COLOR);
+    public void draw(Mat image, boolean text) {
+        Scalar drawColor = OTHER_TARGET_COLOR;
+        if (text) {
+            drawColor = TARGET_COLOR;
+        }
 
-        Imgproc.putText(image, "distance: " + distance, new Point(0, HighGoalProcessor.IMAGE_SIZE.height), Core.FONT_HERSHEY_PLAIN, 1, DRAW_COLOR);
+        Imgproc.line(image, topLeft, topRight, drawColor, DRAW_THICKNESS);
+        Imgproc.line(image, topRight, bottomRight, drawColor, DRAW_THICKNESS);
+        Imgproc.line(image, bottomRight, bottomLeft, drawColor, DRAW_THICKNESS);
+        Imgproc.line(image, bottomLeft, topLeft, drawColor, DRAW_THICKNESS);
+
+        Imgproc.circle(image, center, 5, drawColor);
+
+        if (text) {
+            drawText(image, "       x: " + numberFormat.format(posFeet.x) + " ft", 0,
+                    HighGoalProcessor.IMAGE_SIZE.height - 85);
+            drawText(image, "       y: " + numberFormat.format(posFeet.y) + " ft", 0,
+                    HighGoalProcessor.IMAGE_SIZE.height - 65);
+            drawText(image, " x angle: " + numberFormat.format(Math.toDegrees(xGoalAngle)) + " deg", 0,
+                    HighGoalProcessor.IMAGE_SIZE.height - 45);
+            drawText(image, " y angle: " + numberFormat.format(Math.toDegrees(yGoalAngle)) + " deg", 0,
+                    HighGoalProcessor.IMAGE_SIZE.height - 25);
+            drawText(image, "distance: " + numberFormat.format(distance) + " ft", 0,
+                    HighGoalProcessor.IMAGE_SIZE.height - 5);
+        }
+
+    }
+
+    private static void drawText(Mat image, String text, double x, double y) {
+        Imgproc.putText(image, text, new Point(x, y), Core.FONT_HERSHEY_PLAIN, TEXT_SIZE, TEXT_COLOR);
     }
 
     private boolean validateArea() {
@@ -221,7 +278,12 @@ public class Target implements Comparable<Target> {
      * @return this target's score
      */
     private double calculateScore() {
-        double lScore = (scoreAspectRatio()) / NUM_SCORES;
+        double lScore = (scoreAspectRatio() + scoreRectangularityWidth() + scoreRectangularityHeight()) / NUM_SCORES;
+        if (Double.isNaN(lScore)) {
+            valid = false;
+        }
+        
+        System.out.println("score: "+ lScore + "\n===========");
         return isValid() ? lScore : 0;
     }
 
@@ -236,9 +298,31 @@ public class Target implements Comparable<Target> {
         double ratio = width / height;
         double ideal = TARGET_ASPECT_RATIO;
         double lScore = ratioToScore(ratio / ideal);
-        if (lScore < MIN_ASPECT_RATIO_SCORE) {
+        if (lScore < getMinAspectRatioScore()) {
             valid = false;
         }
+
+        System.out.println("aspect score: " + lScore);
+        return lScore;
+    }
+
+    private double scoreRectangularityWidth() {
+        double lScore = ratioToScore(widthTop / widthBottom);
+
+        if (lScore < getMinRectangularityWidthScore()) {
+            valid = false;
+        }
+        System.out.println("rect width score: " + lScore);
+        return lScore;
+    }
+
+    private double scoreRectangularityHeight() {
+        double lScore = ratioToScore(heightLeft / heightRight);
+
+        if (lScore < getMinRectangularityHeightScore()) {
+            valid = false;
+        }
+        System.out.println("rect height score: " + lScore);
         return lScore;
     }
 
@@ -262,6 +346,20 @@ public class Target implements Comparable<Target> {
      */
     public double getDistance() {
         return distance;
+    }
+
+    /**
+     * @return the angle the robot needs to rotate to aim at the goal
+     */
+    public double getGoalXAngle() {
+        return xGoalAngle;
+    }
+
+    /**
+     * @return the angle the shooter needs to move to aim at the goal
+     */
+    public double getGoalYAngle() {
+        return yGoalAngle;
     }
 
     @Override

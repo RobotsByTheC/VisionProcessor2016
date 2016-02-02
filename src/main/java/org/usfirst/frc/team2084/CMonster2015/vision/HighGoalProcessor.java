@@ -33,7 +33,6 @@ import org.usfirst.frc.team2084.CMonster2015.vision.capture.CameraCapture;
  */
 public class HighGoalProcessor extends VisionProcessor {
 
-    public static final double FOV_ANGLE = Math.toRadians(64.94);
     public static final Size IMAGE_SIZE = new Size(640, 480);
 
     /**
@@ -47,42 +46,31 @@ public class HighGoalProcessor extends VisionProcessor {
         }
     }
 
-    public void init() {
-    }
-
     public void process(Mat image, Mat outImage) {
         // Convert the image to HSV, threshold it and find contours
-        List<MatOfPoint> contours = findContours(threshold(convertToHsv(image)));
+        List<MatOfPoint> contours = findContours(threshold(blur(convertToHsv(image))));
 
         // Array to hold blobs that possibly could be targets
         ArrayList<Target> possibleTargets = new ArrayList<>();
 
         // Convert the contours to Targets
-        contours.stream().forEach(
-                (contour) -> {
-                    contour = convexHull(contour);
-                    Target target = new Target(contour);
-                    if (target.isValid()) {
-                        possibleTargets.add(target);
-                    }
-                });
-        
+        contours.stream().forEach((contour) -> {
+            contour = convexHull(contour);
+            Target target = new Target(contour);
+            if (target.isValid()) {
+                possibleTargets.add(target);
+            }
+        });
+
         Collections.sort(possibleTargets);
 
-        if (!possibleTargets.isEmpty()) {
-            possibleTargets.get(possibleTargets.size() - 1).draw(outImage);
+        for (int i = 0; i < possibleTargets.size(); i++) {
+            possibleTargets.get(i).draw(outImage, i == possibleTargets.size() - 1);
         }
 
-        debugImage("Threshold Image", thresholdImage);
-
-    }
-
-    public void setTargetState(VisionResults.State state) {
-        VisionResults.setState(state);
-        VisionResults.setAutonomousVisionRunning(false);
-        VisionResults.setCameraEnabled(false);
-        System.out.println("Told robot: " + state);
-        init();
+        debugImage("HSV", hsvImage);
+        debugImage("Threshold", thresholdImage);
+        debugImage("Blur", blurImage);        
     }
 
     public BufferedImage matToBufferedImage(Mat m) {
@@ -101,30 +89,35 @@ public class HighGoalProcessor extends VisionProcessor {
         return bufImage;
     }
 
-    private final Mat hsvImage = new Mat(IMAGE_SIZE, CvType.CV_8UC3);
+    private final Mat hsvImage = new Mat();
 
     private Mat convertToHsv(Mat image) {
         Imgproc.cvtColor(image, hsvImage, Imgproc.COLOR_BGR2HSV);
         return hsvImage;
     }
 
-    private final Mat thresholdImage = new Mat(IMAGE_SIZE, CvType.CV_8UC1);
+    private final Mat blurImage = new Mat();
+
+    private Mat blur(Mat image) {
+        Imgproc.medianBlur(image, blurImage, 2 * VisionParameters.getBlurSize() + 1);
+
+        return blurImage;
+    }
+
+    private final Mat thresholdImage = new Mat();
 
     private Mat threshold(Mat image) {
-        Core.inRange(image, VisionParameters.getMinThreshold(), VisionParameters.getMaxThreshold(),
-                thresholdImage);
-        Imgproc.medianBlur(thresholdImage, thresholdImage, 13);
+        Core.inRange(image, VisionParameters.getMinThreshold(), VisionParameters.getMaxThreshold(), thresholdImage);
         return thresholdImage;
     }
 
-    private final Mat contoursImage = new Mat(IMAGE_SIZE, CvType.CV_8UC1);
+    private final Mat contoursImage = new Mat();
 
     private List<MatOfPoint> findContours(Mat image) {
         Mat hierarchy = new Mat();
         ArrayList<MatOfPoint> contours = new ArrayList<>();
         image.copyTo(contoursImage);
-        Imgproc.findContours(contoursImage, contours, hierarchy, Imgproc.RETR_EXTERNAL,
-                Imgproc.CHAIN_APPROX_SIMPLE);
+        Imgproc.findContours(contoursImage, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
         return contours;
     }
 

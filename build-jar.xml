@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project name="VisionProcessor2015-BuildJar" default="vision-jar" basedir="${ant.file.VisionProcessor2015-BuildJar}">
-  <dirname property="VisionProcessor2015.basedir" file="${ant.file.VisionProcessor2015-BuildJar}"/>
-  <target name ="vision-jar" description="Create a jar for the project">
-    <jar jarfile="${VisionProcessor2015.basedir}/dist/VisionProcessor2015.jar" includes="**/*.class" basedir="${VisionProcessor2015.basedir}/bin"/>
-  </target>
-</project>

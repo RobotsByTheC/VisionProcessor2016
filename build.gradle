@@ -4,6 +4,9 @@ buildscript {
   repositories {
 	mavenCentral()
   }
+  dependencies {
+    classpath 'com.google.gradle:osdetector-gradle-plugin:1.4.0'
+  }
 }
 
 repositories {
@@ -15,6 +18,7 @@ repositories {
   }
 }
 
+apply plugin: 'com.google.osdetector'
 apply plugin: 'java'
 apply plugin: 'eclipse'
 
@@ -37,7 +41,11 @@ String opencvCode = opencvVersion.replace(".", "")
 
 dependencies {
   compile files('lib/opencv-310.jar')
-  compileOnly 'edu.wpi.first.wpilib.networktables.java:NetworkTables:+:desktop'
+  String ntType = "desktop"
+  if (osdetector.arch.contains("arm")) {
+  	ntType = "arm"
+  }
+  compileOnly 'edu.wpi.first.wpilib.networktables.java:NetworkTables:3.+:' + ntType
 }
 
 jar {

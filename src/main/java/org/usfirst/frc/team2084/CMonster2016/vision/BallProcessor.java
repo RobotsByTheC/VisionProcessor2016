@@ -4,7 +4,7 @@
  * Open Source Software - may be modified and shared by FRC teams. The code must
  * be accompanied by the BSD license file in the root directory of the project.
  */
-package org.usfirst.frc.team2084.CMonster2015.vision;
+package org.usfirst.frc.team2084.CMonster2016.vision;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +17,7 @@ import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
-import org.usfirst.frc.team2084.CMonster2015.vision.capture.CameraCapture;
+import org.usfirst.frc.team2084.CMonster2016.vision.capture.CameraCapture;
 
 /**
  * @author Ben Wolsieffer

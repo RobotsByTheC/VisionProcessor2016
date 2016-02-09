@@ -4,10 +4,10 @@
  * Open Source Software - may be modified and shared by FRC teams. The code must
  * be accompanied by the BSD license file in the root directory of the project.
  */
-package org.usfirst.frc.team2084.CMonster2015.vision;
+package org.usfirst.frc.team2084.CMonster2016.vision;
 
-import static org.usfirst.frc.team2084.CMonster2015.vision.ScoreUtils.ratioToScore;
-import static org.usfirst.frc.team2084.CMonster2015.vision.VisionParameters.*;
+import static org.usfirst.frc.team2084.CMonster2016.vision.ScoreUtils.ratioToScore;
+import static org.usfirst.frc.team2084.CMonster2016.vision.VisionParameters.*;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;

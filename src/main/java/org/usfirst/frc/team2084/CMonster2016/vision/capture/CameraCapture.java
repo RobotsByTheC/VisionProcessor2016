@@ -345,8 +345,10 @@ public class CameraCapture {
     }
 
     public void setFilename(String filename) {
-        this.filename = filename;
-        connected = false;
+        if (!filename.equals(this.filename)) {
+            this.filename = filename;
+            connected = false;
+        }
     }
 
     public int getDevice() {
@@ -354,8 +356,9 @@ public class CameraCapture {
     }
 
     public void setDevice(int device) {
-        this.device = device;
-        if (filename == null) {
+        if (this.device != device) {
+            this.device = device;
+            filename = null;
             connected = false;
         }
     }

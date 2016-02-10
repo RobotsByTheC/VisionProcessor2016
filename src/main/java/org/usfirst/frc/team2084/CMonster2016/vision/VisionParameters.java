@@ -16,6 +16,8 @@ import edu.wpi.first.wpilibj.tables.ITable;
  */
 public class VisionParameters {
 
+    public static final String DEFAULT_CAMERA_SOURCE = "0";
+
     public static final Range DEFAULT_H_THRESHOLD = new Range(0, 176);
     public static final Range DEFAULT_S_THRESHOLD = new Range(0, 255);
     public static final Range DEFAULT_V_THRESHOLD = new Range(99, 255);
@@ -26,6 +28,8 @@ public class VisionParameters {
     public static final double DEFAULT_APPROX_POLY_EPSILON = 10;
     public static final int DEFAULT_BLUR_SIZE = 6;
     public static final double DEFAULT_FOV_ANGLE = Math.toRadians(64.94);
+
+    private static final String CAMERA_SOURCE_KEY = "camera_source";
 
     private static final String H_MIN_KEY = "hMin";
     private static final String H_MAX_KEY = "hMax";
@@ -42,12 +46,38 @@ public class VisionParameters {
     private static final String MIN_RECTANGULARITY_HEIGHT_SCORE_KEY = "min_rect_h_score";
 
     private static final String APPROX_POLY_EPSILON_KEY = "approx_poly_epsilon";
-        
+
     private static final String BLUR_SIZE_KEY = "blur_size";
-    
+
     private static final String FOV_ANGLE_KEY = "fov_angle";
 
     public static final ITable VISION_PARAMETERS = NetworkTable.getTable("Vision").getSubTable("Parameters");
+    
+    public static void setCameraSource(String source) {
+        VISION_PARAMETERS.putString(CAMERA_SOURCE_KEY, source);
+    }
+
+    private static String getCameraSource() {
+        return VISION_PARAMETERS.getString(CAMERA_SOURCE_KEY, DEFAULT_CAMERA_SOURCE);
+    }
+
+    public static String getCameraSourceRemote() {
+        String source = getCameraSource();
+        try {
+            Integer.parseInt(source);
+            return null;
+        } catch (NumberFormatException ex) {
+            return source;
+        }
+    }
+
+    public static int getCameraSourceLocal() {
+        try {
+            return Integer.parseInt(getCameraSource());
+        } catch (NumberFormatException ex) {
+            return -1;
+        }
+    }
 
     public static void setHThreshold(Range r) {
         VISION_PARAMETERS.putNumber(H_MIN_KEY, r.getMin());
@@ -132,23 +162,23 @@ public class VisionParameters {
     public static void setApproxPolyEpsilon(double epsilon) {
         VISION_PARAMETERS.putNumber(APPROX_POLY_EPSILON_KEY, epsilon);
     }
-    
+
     public static int getBlurSize() {
         return (int) VISION_PARAMETERS.getNumber(BLUR_SIZE_KEY, DEFAULT_BLUR_SIZE);
     }
-    
+
     public static void setBlurSize(int size) {
         VISION_PARAMETERS.putNumber(BLUR_SIZE_KEY, size);
     }
-    
+
     public static double getFOVAngle() {
         return VISION_PARAMETERS.getNumber(FOV_ANGLE_KEY, DEFAULT_FOV_ANGLE);
     }
-    
+
     public static void setFOVAngleRadians(double angleRadians) {
         VISION_PARAMETERS.putNumber(FOV_ANGLE_KEY, angleRadians);
     }
-    
+
     public static void setFOVAngleDegrees(double angleDegrees) {
         VISION_PARAMETERS.putNumber(FOV_ANGLE_KEY, Math.toRadians(angleDegrees));
     }

@@ -14,18 +14,12 @@ import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
 import java.util.ArrayList;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
 import org.opencv.core.MatOfInt;
 import org.opencv.imgcodecs.Imgcodecs;
-
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 /**
  * Serves a Motion JPEG image over HTTP. It supports multiple simultaneous
@@ -231,32 +225,35 @@ public class VideoServer {
                     // Send to all clients.
                     for (int i = 0; i < clientSockets.size(); i++) {
                         AsynchronousSocketChannel cs = clientSockets.get(i);
-                        if (clientSocketReadyFlags.get(i).get()) {
-                            int il  = i;
-                            clientSocketReadyFlags.get(il).set(false);
-                            ByteBuffer buffer = ByteBuffer.wrap(responseBufferOutputStream.toByteArray());
-                            cs.write(buffer, null, new CompletionHandler<Integer, Void>() {
+                        if (cs.isOpen()) {
+                            AtomicBoolean readyFlag = clientSocketReadyFlags.get(i);
+                            if (readyFlag.get()) {
+                                readyFlag.set(false);
+                                ByteBuffer buffer = ByteBuffer.wrap(responseBufferOutputStream.toByteArray());
+                                cs.write(buffer, null, new CompletionHandler<Integer, Void>() {
 
-                                @Override
-                                public void completed(Integer result, Void attachment) {
-                                    if (buffer.hasRemaining()) {
-                                        cs.write(buffer, null, this);
-                                    } else {
-                                        clientSocketReadyFlags.get(il).set(true);
+                                    @Override
+                                    public void completed(Integer result, Void attachment) {
+                                        if (buffer.hasRemaining()) {
+                                            cs.write(buffer, null, this);
+                                        } else {
+                                            readyFlag.set(true);
+                                        }
                                     }
-                                }
 
-                                @Override
-                                public void failed(Throwable exc, Void attachment) {
-                                    try {
-                                        cs.close();
-                                    } catch (IOException e) {
+                                    @Override
+                                    public void failed(Throwable exc, Void attachment) {
+                                        try {
+                                            cs.close();
+                                        } catch (IOException e) {
+                                        }
                                     }
-                                    clientSocketReadyFlags.remove(il);
-                                    clientSockets.remove(il);
-                                }
-                            });
+                                });
 
+                            }
+                        } else {
+                            clientSockets.remove(i);
+                            clientSocketReadyFlags.remove(i);
                         }
                     }
                 }

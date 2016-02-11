@@ -16,11 +16,16 @@ import java.nio.channels.CompletionHandler;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
 import org.opencv.core.MatOfInt;
 import org.opencv.imgcodecs.Imgcodecs;
+
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 /**
  * Serves a Motion JPEG image over HTTP. It supports multiple simultaneous
@@ -47,7 +52,7 @@ public class VideoServer {
             public void completed(Integer result, Void attachment) {
                 synchronized (clientSockets) {
                     clientSockets.add(clientSocket);
-                    clientSocketFutures.add(null);
+                    clientSocketReadyFlags.add(new AtomicBoolean(true));
                 }
             }
 
@@ -66,11 +71,10 @@ public class VideoServer {
     /**
      * The header that is initially sent when a client connects.
      */
-    private static final ByteBuffer HEADER = ByteBuffer.wrap(("HTTP/1.0 200 OK\r\n" +
-            "Server: VideoStreamer\r\n" +
-            "Cache-Control: no-cache\r\n" +
-            "Cache-Control: private\r\n" +
-            "Content-Type: multipart/x-mixed-replace;boundary=jpgbound\r\n").getBytes());
+    private static final ByteBuffer HEADER =
+            ByteBuffer.wrap(("HTTP/1.0 200 OK\r\n" + "Server: VideoStreamer\r\n" + "Cache-Control: no-cache\r\n"
+                    + "Cache-Control: private\r\n" + "Content-Type: multipart/x-mixed-replace;boundary=jpgbound\r\n")
+                            .getBytes());
 
     /**
      * The content type that is sent to the client before each image.
@@ -99,7 +103,7 @@ public class VideoServer {
      * List of streams for currently connected clients.
      */
     private final ArrayList<AsynchronousSocketChannel> clientSockets = new ArrayList<>(2);
-    private final ArrayList<Future<Integer>> clientSocketFutures = new ArrayList<>(1);
+    private final ArrayList<AtomicBoolean> clientSocketReadyFlags = new ArrayList<>(2);
 
     /**
      * Buffer that holds the JPEG data.
@@ -159,8 +163,7 @@ public class VideoServer {
         // Do nothing if already running.
         if (!running) {
             if (serverSocket == null || !serverSocket.isOpen()) {
-                serverSocket = AsynchronousServerSocketChannel.open().bind(
-                        new InetSocketAddress(port));
+                serverSocket = AsynchronousServerSocketChannel.open().bind(new InetSocketAddress(port));
                 serverSocket.accept(null, new CompletionHandler<AsynchronousSocketChannel, Void>() {
 
                     @Override
@@ -208,10 +211,8 @@ public class VideoServer {
             // Only send if at least one client is connected.
             if (!clientSockets.isEmpty()) {
                 // Encode the image as a JPEG.
-                Imgcodecs.imencode(".jpg", image, compressionBuffer,
-                        qualityParams);
-                int size = (int) compressionBuffer.total() *
-                        compressionBuffer.channels();
+                Imgcodecs.imencode(".jpg", image, compressionBuffer, qualityParams);
+                int size = (int) compressionBuffer.total() * compressionBuffer.channels();
                 // Resize the Java buffer to fit the data if necessary
                 if (size > socketBuffer.length) {
                     socketBuffer = new byte[size];
@@ -223,27 +224,39 @@ public class VideoServer {
                 // Reset response buffer to the end of the header
                 responseBufferOutputStream.markReset();
                 // Write content length
-                responseBufferOutputStream.write(("Content-Length: " + size +
-                        "\r\n\r\n").getBytes());
+                responseBufferOutputStream.write(("Content-Length: " + size + "\r\n\r\n").getBytes());
                 // Write image to response buffer
                 responseBufferOutputStream.write(socketBuffer, 0, size);
                 synchronized (clientSockets) {
                     // Send to all clients.
                     for (int i = 0; i < clientSockets.size(); i++) {
                         AsynchronousSocketChannel cs = clientSockets.get(i);
-                        Future<Integer> future = clientSocketFutures.get(i);
-                        if (future == null || future.isDone()) {
-                            try {
-                                if (future != null) {
-                                    future.get();
+                        if (clientSocketReadyFlags.get(i).get()) {
+                            int il  = i;
+                            clientSocketReadyFlags.get(il).set(false);
+                            ByteBuffer buffer = ByteBuffer.wrap(responseBufferOutputStream.toByteArray());
+                            cs.write(buffer, null, new CompletionHandler<Integer, Void>() {
+
+                                @Override
+                                public void completed(Integer result, Void attachment) {
+                                    if (buffer.hasRemaining()) {
+                                        cs.write(buffer, null, this);
+                                    } else {
+                                        clientSocketReadyFlags.get(il).set(true);
+                                    }
                                 }
-                                clientSocketFutures.set(i, cs.write(
-                                        ByteBuffer.wrap(responseBufferOutputStream.toByteArray())));
-                            } catch (InterruptedException | ExecutionException ex) {
-                                cs.close();
-                                clientSocketFutures.remove(i);
-                                clientSockets.remove(i);
-                            }
+
+                                @Override
+                                public void failed(Throwable exc, Void attachment) {
+                                    try {
+                                        cs.close();
+                                    } catch (IOException e) {
+                                    }
+                                    clientSocketReadyFlags.remove(il);
+                                    clientSockets.remove(il);
+                                }
+                            });
+
                         }
                     }
                 }

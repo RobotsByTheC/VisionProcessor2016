@@ -22,6 +22,7 @@ import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
 import org.opencv.core.MatOfInt;
 import org.opencv.core.MatOfPoint;
+import org.opencv.core.Point;
 import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
@@ -32,6 +33,8 @@ import org.usfirst.frc.team2084.CMonster2016.vision.capture.CameraCapture;
  * @author Ben Wolsieffer
  */
 public class HighGoalProcessor extends VisionProcessor {
+
+    private final FramerateCounter fpsCounter = new FramerateCounter();
 
     public static final Size IMAGE_SIZE = new Size(640, 480);
 
@@ -70,7 +73,10 @@ public class HighGoalProcessor extends VisionProcessor {
 
         debugImage("HSV", hsvImage);
         debugImage("Threshold", thresholdImage);
-        debugImage("Blur", blurImage);        
+        debugImage("Blur", blurImage);
+
+        Imgproc.putText(outImage, "FPS: " + Target.NUMBER_FORMAT.format(fpsCounter.update()), new Point(20, 70),
+                Core.FONT_HERSHEY_PLAIN, Target.TEXT_SIZE, Target.TEXT_COLOR);
     }
 
     public BufferedImage matToBufferedImage(Mat m) {

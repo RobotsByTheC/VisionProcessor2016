@@ -37,12 +37,12 @@ import org.opencv.imgproc.Moments;
  */
 public class Target implements Comparable<Target> {
 
-    private static final Scalar TARGET_COLOR = new Scalar(0, 255, 0);
-    private static final Scalar OTHER_TARGET_COLOR = new Scalar(255, 255, 255);
-    private static final Scalar TEXT_COLOR = new Scalar(255, 255, 255);
-    private static final double TEXT_SIZE = 1.5;
-    private static final int DRAW_THICKNESS = 3;
-    private static final NumberFormat numberFormat = new DecimalFormat("#0.0000");
+    public static final Scalar TARGET_COLOR = new Scalar(0, 255, 0);
+    public static final Scalar OTHER_TARGET_COLOR = new Scalar(255, 255, 255);
+    public static final Scalar TEXT_COLOR = new Scalar(255, 255, 255);
+    public static final double TEXT_SIZE = 1.5;
+    public static final int DRAW_THICKNESS = 3;
+    public static final NumberFormat NUMBER_FORMAT = new DecimalFormat("#0.0000");
 
     /**
      * The number of tests that produce a score. Used for calculating the
@@ -249,15 +249,15 @@ public class Target implements Comparable<Target> {
         Imgproc.circle(image, center, 5, drawColor);
 
         if (text) {
-            drawText(image, "       x: " + numberFormat.format(posFeet.x) + " ft", 0,
+            drawText(image, "       x: " + NUMBER_FORMAT.format(posFeet.x) + " ft", 0,
                     HighGoalProcessor.IMAGE_SIZE.height - 85);
-            drawText(image, "       y: " + numberFormat.format(posFeet.y) + " ft", 0,
+            drawText(image, "       y: " + NUMBER_FORMAT.format(posFeet.y) + " ft", 0,
                     HighGoalProcessor.IMAGE_SIZE.height - 65);
-            drawText(image, " x angle: " + numberFormat.format(Math.toDegrees(xGoalAngle)) + " deg", 0,
+            drawText(image, " x angle: " + NUMBER_FORMAT.format(Math.toDegrees(xGoalAngle)) + " deg", 0,
                     HighGoalProcessor.IMAGE_SIZE.height - 45);
-            drawText(image, " y angle: " + numberFormat.format(Math.toDegrees(yGoalAngle)) + " deg", 0,
+            drawText(image, " y angle: " + NUMBER_FORMAT.format(Math.toDegrees(yGoalAngle)) + " deg", 0,
                     HighGoalProcessor.IMAGE_SIZE.height - 25);
-            drawText(image, "distance: " + numberFormat.format(distance) + " ft", 0,
+            drawText(image, "distance: " + NUMBER_FORMAT.format(distance) + " ft", 0,
                     HighGoalProcessor.IMAGE_SIZE.height - 5);
         }
 

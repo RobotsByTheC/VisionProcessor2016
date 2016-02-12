@@ -28,6 +28,8 @@ import org.opencv.imgcodecs.Imgcodecs;
  * @author Ben Wolsieffer
  */
 public class VideoServer {
+    
+    private static final int SEND_BUFFER_SIZE = 100000;
 
     /**
      * Listens for connections on the server port. This thread sends an HTTP
@@ -36,7 +38,7 @@ public class VideoServer {
     private void acceptConnection(AsynchronousSocketChannel clientSocket) {
         HEADER.rewind();
         try {
-            clientSocket.setOption(StandardSocketOptions.SO_SNDBUF, 0);
+            clientSocket.setOption(StandardSocketOptions.SO_SNDBUF, SEND_BUFFER_SIZE);
         } catch (IOException e2) {
             e2.printStackTrace();
         }

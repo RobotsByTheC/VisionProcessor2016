@@ -30,7 +30,8 @@ public final class ImageConvertor {
         // Get BufferedImage type
         int javaType = toJavaImageType(type);
         // If the Mat does not match the BufferedImage, create a new one.
-        if (javaImage == null || width != javaImage.getWidth() || height != javaImage.getHeight() || javaType != javaImage.getType()) {
+        if (javaImage == null || width != javaImage.getWidth() || height != javaImage.getHeight()
+                || javaType != javaImage.getType()) {
             javaImage = new BufferedImage(width, height, javaType);
         }
         // Copy Mat data to BufferedImage
@@ -45,7 +46,7 @@ public final class ImageConvertor {
         // Get Mat type
         int cvType = toCVImageType(type);
         // If the Mat does not match the BufferedImage, create a new one.
-        if ( width != mat.width() || height != mat.height() || cvType != image.getType()) {
+        if (width != mat.width() || height != mat.height() || cvType != image.getType()) {
             mat.create(height, width, cvType);
         }
         // Copy BufferedImage data to Mat

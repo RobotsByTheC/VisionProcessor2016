@@ -52,7 +52,7 @@ public class VisionParameters {
     private static final String FOV_ANGLE_KEY = "fov_angle";
 
     public static final ITable VISION_PARAMETERS = NetworkTable.getTable("Vision").getSubTable("Parameters");
-    
+
     public static void setCameraSource(String source) {
         VISION_PARAMETERS.putString(CAMERA_SOURCE_KEY, source);
     }

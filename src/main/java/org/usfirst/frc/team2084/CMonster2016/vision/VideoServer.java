@@ -28,7 +28,7 @@ import org.opencv.imgcodecs.Imgcodecs;
  * @author Ben Wolsieffer
  */
 public class VideoServer {
-    
+
     private static final int SEND_BUFFER_SIZE = 100000;
 
     /**

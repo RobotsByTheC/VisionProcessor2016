@@ -35,6 +35,10 @@ eclipse {
   }
 }
 
+javadoc {
+  failOnError false
+}
+
 // This should not be changed without notifying everybody
 String opencvVersion = "3.1.0"
 String opencvCode = opencvVersion.replace(".", "")

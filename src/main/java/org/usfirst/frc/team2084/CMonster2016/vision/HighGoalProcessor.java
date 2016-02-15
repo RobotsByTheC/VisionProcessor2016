@@ -49,6 +49,7 @@ public class HighGoalProcessor extends VisionProcessor {
         }
     }
 
+    @Override
     public void process(Mat image, Mat outImage) {
         // Convert the image to HSV, threshold it and find contours
         List<MatOfPoint> contours = findContours(threshold(blur(convertToHsv(image))));
@@ -68,7 +69,13 @@ public class HighGoalProcessor extends VisionProcessor {
         Collections.sort(possibleTargets);
 
         for (int i = 0; i < possibleTargets.size(); i++) {
-            possibleTargets.get(i).draw(outImage, i == possibleTargets.size() - 1);
+            Target t = possibleTargets.get(i);
+            t.draw(outImage, i == possibleTargets.size() - 1);
+            if (i == possibleTargets.size() - 1) {
+                VisionResults.setGoalHeading(t.getGoalXAngle());
+                VisionResults.setGoalAngle(t.getGoalYAngle());
+                VisionResults.update();
+            }
         }
 
         debugImage("HSV", hsvImage);

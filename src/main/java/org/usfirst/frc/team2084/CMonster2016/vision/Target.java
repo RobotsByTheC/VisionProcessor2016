@@ -282,8 +282,8 @@ public class Target implements Comparable<Target> {
         if (Double.isNaN(lScore)) {
             valid = false;
         }
-        
-//        System.out.println("score: "+ lScore + "\n===========");
+
+        // System.out.println("score: "+ lScore + "\n===========");
         return isValid() ? lScore : 0;
     }
 
@@ -302,7 +302,7 @@ public class Target implements Comparable<Target> {
             valid = false;
         }
 
-//        System.out.println("aspect score: " + lScore);
+        // System.out.println("aspect score: " + lScore);
         return lScore;
     }
 
@@ -312,7 +312,7 @@ public class Target implements Comparable<Target> {
         if (lScore < getMinRectangularityWidthScore()) {
             valid = false;
         }
-//        System.out.println("rect width score: " + lScore);
+        // System.out.println("rect width score: " + lScore);
         return lScore;
     }
 
@@ -322,7 +322,7 @@ public class Target implements Comparable<Target> {
         if (lScore < getMinRectangularityHeightScore()) {
             valid = false;
         }
-//        System.out.println("rect height score: " + lScore);
+        // System.out.println("rect height score: " + lScore);
         return lScore;
     }
 

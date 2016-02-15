@@ -28,8 +28,7 @@ public class BallProcessor extends VisionProcessor {
 
     private int KERNEL_SIZE = 5;
     private Mat KERNEL = Imgproc.getStructuringElement(Imgproc.MORPH_RECT,
-            new Size(2 * KERNEL_SIZE + 1, 2 * KERNEL_SIZE + 1),
-            new Point(-1, -1));
+            new Size(2 * KERNEL_SIZE + 1, 2 * KERNEL_SIZE + 1), new Point(-1, -1));
 
     private Scalar thresholdMin = new Scalar(24, 0, 30);
     private Scalar thresholdMax = new Scalar(135, 196, 225);
@@ -65,8 +64,7 @@ public class BallProcessor extends VisionProcessor {
         contours.clear();
         hulls.clear();
 
-        Imgproc.findContours(contourImage, contours, hierarchy, Imgproc.RETR_EXTERNAL,
-                Imgproc.CHAIN_APPROX_SIMPLE);
+        Imgproc.findContours(contourImage, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
         Imgproc.drawContours(outputImage, contours, -1, CONTOUR_COLOR);
 
         for (int i = 0; i < contours.size(); i++) {

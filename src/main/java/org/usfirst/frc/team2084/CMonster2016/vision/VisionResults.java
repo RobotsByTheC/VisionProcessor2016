@@ -8,20 +8,41 @@ package org.usfirst.frc.team2084.CMonster2016.vision;
 
 import edu.wpi.first.wpilibj.networktables.NetworkTable;
 import edu.wpi.first.wpilibj.tables.ITable;
+import edu.wpi.first.wpilibj.tables.ITableListener;
 
 /**
  * @author Ben Wolsieffer
  */
 public class VisionResults {
 
-    public static final ITable VISION_RESULTS = NetworkTable.getTable("Vision").getSubTable(
-            "Results");
+    public static final ITable VISION_RESULTS = NetworkTable.getTable("Vision").getSubTable("Results");
 
     public static final String HEADING_KEY = "heading";
     public static final String GOAL_HEADING_KEY = "goal_heading";
     public static final String SHOOTER_ANGLE_KEY = "shooter_angle";
     public static final String GOAL_ANGLE_KEY = "goal_angle";
-    public static final String TARGET_TABLE_ENABLE_CAMERA_KEY = "enable_camera";
+    public static final String UPDATE_KEY = "update";
+
+    public static final long STALE_TIMEOUT = 500;
+
+    private static int updateCount = 0;
+    private static boolean listenerRegistered = false;
+    private static long lastUpdateTime;
+
+    public static void update() {
+        VISION_RESULTS.putNumber(UPDATE_KEY, ++updateCount);
+    }
+
+    public static boolean isStale() {
+        if (!listenerRegistered) {
+            VISION_RESULTS.addTableListener(UPDATE_KEY, (ITable source, String key, Object value, boolean isNew) -> {
+                lastUpdateTime = System.currentTimeMillis();
+            } , false);
+            listenerRegistered = true;
+        }
+
+        return System.currentTimeMillis() - lastUpdateTime > STALE_TIMEOUT;
+    }
 
     public static double getCurrentHeading() {
         return VISION_RESULTS.getNumber(HEADING_KEY, 0);
@@ -46,21 +67,13 @@ public class VisionResults {
     public static void setShooterAngle(double angle) {
         VISION_RESULTS.putNumber(SHOOTER_ANGLE_KEY, angle);
     }
-    
+
     public static double getGoalAngle() {
         return VISION_RESULTS.getNumber(GOAL_ANGLE_KEY, 0);
     }
 
     public static void setGoalAngle(double angle) {
         VISION_RESULTS.putNumber(GOAL_ANGLE_KEY, angle);
-    }
-    
-    public static void setCameraEnabled(boolean enabled) {
-        VISION_RESULTS.putBoolean(TARGET_TABLE_ENABLE_CAMERA_KEY, enabled);
-    }
-
-    public static boolean isCameraEnabled() {
-        return VISION_RESULTS.getBoolean(TARGET_TABLE_ENABLE_CAMERA_KEY, true);
     }
 
     private VisionResults() {

@@ -21,7 +21,7 @@ import edu.wpi.first.wpilibj.tables.ITable;
  * @author Ben Wolsieffer
  */
 public abstract class VisionProcessor {
-    
+
     /**
      * Thread that runs the OpenCV processing of the camera.
      */
@@ -97,7 +97,7 @@ public abstract class VisionProcessor {
      * 
      * @param cameraImage the image retrieved from the camera
      * @param outputImage the image which to draw output onto, it starts out the
-     *            same as the camera image
+     *        same as the camera image
      */
     protected abstract void process(Mat cameraImage, Mat outputImage);
 }

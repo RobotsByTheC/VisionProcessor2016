@@ -8,7 +8,6 @@ package org.usfirst.frc.team2084.CMonster2016.vision;
 
 import edu.wpi.first.wpilibj.networktables.NetworkTable;
 import edu.wpi.first.wpilibj.tables.ITable;
-import edu.wpi.first.wpilibj.tables.ITableListener;
 
 /**
  * @author Ben Wolsieffer
@@ -21,6 +20,7 @@ public class VisionResults {
     public static final String GOAL_HEADING_KEY = "goal_heading";
     public static final String SHOOTER_ANGLE_KEY = "shooter_angle";
     public static final String GOAL_ANGLE_KEY = "goal_angle";
+    public static final String GOAL_DISTANCE_KEY = "goal_distance";
     public static final String UPDATE_KEY = "update";
 
     public static final long STALE_TIMEOUT = 500;
@@ -74,6 +74,14 @@ public class VisionResults {
 
     public static void setGoalAngle(double angle) {
         VISION_RESULTS.putNumber(GOAL_ANGLE_KEY, angle);
+    }
+
+    public static double getGoalDistance() {
+        return VISION_RESULTS.getNumber(GOAL_DISTANCE_KEY, 0);
+    }
+
+    public static void setGoalDistance(double distance) {
+        VISION_RESULTS.putNumber(GOAL_DISTANCE_KEY, distance);
     }
 
     private VisionResults() {

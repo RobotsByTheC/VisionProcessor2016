@@ -28,6 +28,7 @@ public class VisionParameters {
     public static final double DEFAULT_APPROX_POLY_EPSILON = 10;
     public static final int DEFAULT_BLUR_SIZE = 6;
     public static final double DEFAULT_FOV_ANGLE = Math.toRadians(64.94);
+    public static final double DEFAULT_EXPOSURE = 0;
 
     private static final String CAMERA_SOURCE_KEY = "camera_source";
 
@@ -50,6 +51,8 @@ public class VisionParameters {
     private static final String BLUR_SIZE_KEY = "blur_size";
 
     private static final String FOV_ANGLE_KEY = "fov_angle";
+
+    private static final String EXPOSURE_KEY = "exposure";
 
     public static final ITable VISION_PARAMETERS = NetworkTable.getTable("Vision").getSubTable("Parameters");
 
@@ -181,6 +184,14 @@ public class VisionParameters {
 
     public static void setFOVAngleDegrees(double angleDegrees) {
         VISION_PARAMETERS.putNumber(FOV_ANGLE_KEY, Math.toRadians(angleDegrees));
+    }
+
+    public static void setExposure(double exposure) {
+        VISION_PARAMETERS.putNumber(EXPOSURE_KEY, exposure);
+    }
+
+    public static double getExposure() {
+        return VISION_PARAMETERS.getNumber(EXPOSURE_KEY, DEFAULT_EXPOSURE);
     }
 
     private VisionParameters() {

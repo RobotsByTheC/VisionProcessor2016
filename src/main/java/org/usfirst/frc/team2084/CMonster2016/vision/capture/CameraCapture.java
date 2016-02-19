@@ -75,9 +75,12 @@ public class CameraCapture {
                                         connected = true;
                                     }
                                 }
-                                // Set the properties of the camera.
-                                setResolution(resolution);
-                                setFPS(fps);
+                                if (connected) {
+                                    // Set the properties of the camera.
+                                    setResolution(resolution);
+                                    setFPS(fps++);
+                                    setExposure(exposure++);
+                                }
                             } catch (CvException ex) {
                                 System.out.println("Failed to connect to camera: " + ex);
                             }
@@ -104,6 +107,7 @@ public class CameraCapture {
     }
 
     private static final int CV_CAP_PROP_FPS = 5;
+    private static final int CV_CAP_PROP_EXPOSURE = 15;
 
     /**
      * Device number, if this is a local camera, otherwise it should be -1} .
@@ -151,6 +155,7 @@ public class CameraCapture {
     // Properties
     private Size resolution = null;
     private double fps = -1;
+    private double exposure = 0;
 
     /**
      * Captures from the device specified by the parameter.
@@ -301,6 +306,17 @@ public class CameraCapture {
         }
     }
 
+    public void setExposure(double exposure) {
+        if (exposure != this.exposure) {
+            this.exposure = exposure;
+            if (running) {
+                synchronized (capture) {
+                    capture.set(CV_CAP_PROP_EXPOSURE, exposure);
+                }
+            }
+        }
+    }
+
     /**
      * Gets the frame rate of the video stream. This method usually doesn't work
      * for cameras. If the device doesn't support it, this method should return
@@ -326,16 +342,18 @@ public class CameraCapture {
      * @param fps the number of frames per second
      */
     public void setFPS(double fps) {
-        this.fps = fps;
-        // If the fps is invalid, make it -1.
-        if (fps <= 0) {
-            this.fps = -1;
-        }
-        // If the fps is valid and the camera is running, change the camera
-        // settings.
-        if (running && fps > 0) {
-            synchronized (capture) {
-                capture.set(CV_CAP_PROP_FPS, fps);
+        if (fps != this.fps) {
+            this.fps = fps;
+            // If the fps is invalid, make it -1.
+            if (fps <= 0) {
+                this.fps = -1;
+            }
+            // If the fps is valid and the camera is running, change the camera
+            // settings.
+            if (running && fps > 0) {
+                synchronized (capture) {
+                    capture.set(CV_CAP_PROP_FPS, fps);
+                }
             }
         }
     }

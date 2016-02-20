@@ -72,8 +72,8 @@ public class HighGoalProcessor extends VisionProcessor {
             Target t = possibleTargets.get(i);
             t.draw(outImage, i == possibleTargets.size() - 1);
             if (i == possibleTargets.size() - 1) {
-                VisionResults.setGoalHeading(t.getGoalXAngle());
-                VisionResults.setGoalAngle(t.getGoalYAngle());
+                VisionResults.setGoalHeading(VisionResults.getCurrentHeading() + t.getGoalXAngle());
+                VisionResults.setGoalAngle(VisionResults.getShooterAngle() + t.getGoalYAngle());
                 VisionResults.setGoalDistance(t.getDistance());
                 VisionResults.update();
             }

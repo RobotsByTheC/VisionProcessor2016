@@ -53,6 +53,7 @@ public class VisionParameters {
     private static final String FOV_ANGLE_KEY = "fov_angle";
 
     private static final String EXPOSURE_KEY = "exposure";
+    public static final String SHUTDOWN_KEY = "shutdown";
 
     public static final ITable VISION_PARAMETERS = NetworkTable.getTable("Vision").getSubTable("Parameters");
 
@@ -192,6 +193,18 @@ public class VisionParameters {
 
     public static double getExposure() {
         return VISION_PARAMETERS.getNumber(EXPOSURE_KEY, DEFAULT_EXPOSURE);
+    }
+
+    public static void shutdown() {
+        VISION_PARAMETERS.putBoolean(SHUTDOWN_KEY, true);
+    }
+
+    public static boolean shouldShutdown() {
+        boolean shutdown = VISION_PARAMETERS.getBoolean(SHUTDOWN_KEY, false);
+        if (shutdown) {
+            VISION_PARAMETERS.putBoolean(SHUTDOWN_KEY, false);
+        }
+        return shutdown;
     }
 
     private VisionParameters() {

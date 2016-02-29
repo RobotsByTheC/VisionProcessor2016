@@ -34,7 +34,39 @@ import org.usfirst.frc.team2084.CMonster2016.vision.capture.CameraCapture;
  */
 public class HighGoalProcessor extends VisionProcessor {
 
-    private final FramerateCounter fpsCounter = new FramerateCounter();
+    private class ProcessingThread implements Runnable {
+
+        private final Mat localImage = new Mat();
+
+        @Override
+        public void run() {
+            while (true) {
+                boolean localNewImage = false;
+                synchronized (image) {
+                    try {
+                        image.wait();
+                    } catch (InterruptedException e) {
+                    }
+                    if (newImage) {
+                        newImage = false;
+                        localNewImage = true;
+                        image.copyTo(localImage);
+                    }
+                }
+                if (localNewImage) {
+                    doProcessing(localImage);
+                }
+            }
+        }
+    }
+
+    private volatile boolean newImage;
+    private final Mat image = new Mat();
+    private volatile Target target;
+    private volatile double processingFps;
+
+    private final FramerateCounter processingFpsCounter = new FramerateCounter();
+    private final FramerateCounter streamingFpsCounter = new FramerateCounter();
 
     public static final Size IMAGE_SIZE = new Size(640, 480);
 
@@ -47,10 +79,10 @@ public class HighGoalProcessor extends VisionProcessor {
         if (capture != null) {
             capture.setResolution(IMAGE_SIZE);
         }
+        new Thread(new ProcessingThread()).start();
     }
 
-    @Override
-    public void process(Mat image, Mat outImage) {
+    private void doProcessing(Mat image) {
         // Convert the image to HSV, threshold it and find contours
         List<MatOfPoint> contours = findContours(threshold(blur(convertToHsv(image))));
 
@@ -68,23 +100,46 @@ public class HighGoalProcessor extends VisionProcessor {
 
         Collections.sort(possibleTargets);
 
-        for (int i = 0; i < possibleTargets.size(); i++) {
-            Target t = possibleTargets.get(i);
-            t.draw(outImage, i == possibleTargets.size() - 1);
-            if (i == possibleTargets.size() - 1) {
-                VisionResults.setGoalHeading(VisionResults.getCurrentHeading() + t.getGoalXAngle());
-                VisionResults.setGoalAngle(VisionResults.getShooterAngle() + t.getGoalYAngle());
-                VisionResults.setGoalDistance(t.getDistance());
-                VisionResults.update();
+        if (!possibleTargets.isEmpty()) {
+            for (int i = 0; i < possibleTargets.size(); i++) {
+                Target t = possibleTargets.get(i);
+                target = t;
+                if (i == possibleTargets.size() - 1) {
+                    VisionResults.setGoalHeading(VisionResults.getCurrentHeading() + t.getGoalXAngle());
+                    VisionResults.setGoalAngle(VisionResults.getShooterAngle() + t.getGoalYAngle());
+                    VisionResults.setGoalDistance(t.getDistance());
+                    VisionResults.update();
+                }
             }
+        } else {
+            target = null;
         }
 
         debugImage("HSV", hsvImage);
         debugImage("Threshold", thresholdImage);
         debugImage("Blur", blurImage);
 
-        Imgproc.putText(outImage, "FPS: " + Target.NUMBER_FORMAT.format(fpsCounter.update()), new Point(20, 70),
+        processingFps = processingFpsCounter.update();
+    }
+
+    @Override
+    public void process(Mat image, Mat outImage) {
+
+        synchronized (this.image) {
+            image.copyTo(this.image);
+            newImage = true;
+            this.image.notify();
+        }
+
+        Target localTarget = target;
+        if (localTarget != null) {
+            localTarget.draw(outImage, true);
+        }
+
+        Imgproc.putText(outImage, "Vision FPS: " + Target.NUMBER_FORMAT.format(processingFps), new Point(20, 70),
                 Core.FONT_HERSHEY_PLAIN, Target.TEXT_SIZE, Target.TEXT_COLOR);
+        Imgproc.putText(outImage, "Stream FPS: " + Target.NUMBER_FORMAT.format(streamingFpsCounter.update()),
+                new Point(20, 90), Core.FONT_HERSHEY_PLAIN, Target.TEXT_SIZE, Target.TEXT_COLOR);
     }
 
     public BufferedImage matToBufferedImage(Mat m) {

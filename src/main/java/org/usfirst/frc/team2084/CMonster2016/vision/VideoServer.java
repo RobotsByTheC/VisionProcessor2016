@@ -265,6 +265,14 @@ public class VideoServer {
         }
     }
 
+    public int getQuality() {
+        return (int) qualityParams.get(1, 0)[0];
+    }
+
+    public void setQuality(int quality) {
+        qualityParams.put(1, 0, quality);
+    }
+
     /**
      * Gets whether the server is running.
      * 

@@ -29,6 +29,7 @@ public class VisionParameters {
     public static final int DEFAULT_BLUR_SIZE = 6;
     public static final double DEFAULT_FOV_ANGLE = Math.toRadians(64.94);
     public static final double DEFAULT_EXPOSURE = 0;
+    public static final int DEFAULT_STREAM_QUALITY = 95;
 
     private static final String CAMERA_SOURCE_KEY = "camera_source";
 
@@ -53,7 +54,10 @@ public class VisionParameters {
     private static final String FOV_ANGLE_KEY = "fov_angle";
 
     private static final String EXPOSURE_KEY = "exposure";
-    public static final String SHUTDOWN_KEY = "shutdown";
+
+    private static final String STREAM_QUALITY_KEY = "str_qual";
+
+    private static final String SHUTDOWN_KEY = "shutdown";
 
     public static final ITable VISION_PARAMETERS = NetworkTable.getTable("Vision").getSubTable("Parameters");
 
@@ -193,6 +197,14 @@ public class VisionParameters {
 
     public static double getExposure() {
         return VISION_PARAMETERS.getNumber(EXPOSURE_KEY, DEFAULT_EXPOSURE);
+    }
+
+    public static void setStreamQuality(int quality) {
+        VISION_PARAMETERS.putNumber(STREAM_QUALITY_KEY, quality);
+    }
+
+    public static int getStreamQuality() {
+        return (int) VISION_PARAMETERS.getNumber(STREAM_QUALITY_KEY, DEFAULT_STREAM_QUALITY);
     }
 
     public static void shutdown() {

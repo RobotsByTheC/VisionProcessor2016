@@ -28,6 +28,7 @@ public class VisionParameters {
     public static final double DEFAULT_APPROX_POLY_EPSILON = 10;
     public static final int DEFAULT_BLUR_SIZE = 6;
     public static final double DEFAULT_FOV_ANGLE = Math.toRadians(64.94);
+    public static final boolean DEFAULT_AUTO_EXPOSURE = true;
     public static final double DEFAULT_EXPOSURE = 0;
     public static final int DEFAULT_STREAM_QUALITY = 95;
 
@@ -53,6 +54,7 @@ public class VisionParameters {
 
     private static final String FOV_ANGLE_KEY = "fov_angle";
 
+    private static final String AUTO_EXPOSURE_KEY = "auto_exposure";
     private static final String EXPOSURE_KEY = "exposure";
 
     private static final String STREAM_QUALITY_KEY = "str_qual";
@@ -60,6 +62,10 @@ public class VisionParameters {
     private static final String SHUTDOWN_KEY = "shutdown";
 
     public static final ITable VISION_PARAMETERS = NetworkTable.getTable("Vision").getSubTable("Parameters");
+
+    static {
+        setAutoExposure(true);
+    }
 
     public static void setCameraSource(String source) {
         VISION_PARAMETERS.putString(CAMERA_SOURCE_KEY, source);
@@ -189,6 +195,14 @@ public class VisionParameters {
 
     public static void setFOVAngleDegrees(double angleDegrees) {
         VISION_PARAMETERS.putNumber(FOV_ANGLE_KEY, Math.toRadians(angleDegrees));
+    }
+
+    public static void setAutoExposure(boolean enabled) {
+        VISION_PARAMETERS.putBoolean(AUTO_EXPOSURE_KEY, enabled);
+    }
+
+    public static boolean getAutoExposure() {
+        return VISION_PARAMETERS.getBoolean(AUTO_EXPOSURE_KEY, DEFAULT_AUTO_EXPOSURE);
     }
 
     public static void setExposure(double exposure) {

@@ -79,7 +79,6 @@ public class CameraCapture {
                                     // Set the properties of the camera.
                                     setResolution(resolution);
                                     setFPS(fps++);
-                                    setExposure(exposure++);
                                 }
                             } catch (CvException ex) {
                                 System.out.println("Failed to connect to camera: " + ex);
@@ -152,10 +151,11 @@ public class CameraCapture {
      */
     private final Object imageNotifier = new Object();
 
+    private V4LControl control;
+
     // Properties
     private Size resolution = null;
     private double fps = -1;
-    private double exposure = 0;
 
     /**
      * Captures from the device specified by the parameter.
@@ -164,6 +164,7 @@ public class CameraCapture {
      */
     public CameraCapture(int device) {
         this.device = device;
+        control = new V4LControl(device);
     }
 
     /**
@@ -306,14 +307,15 @@ public class CameraCapture {
         }
     }
 
+    public void setAutoExposure(boolean enabled) {
+        if (control != null) {
+            control.enableAutoExposure(enabled);
+        }
+    }
+
     public void setExposure(double exposure) {
-        if (exposure != this.exposure) {
-            this.exposure = exposure;
-            if (running) {
-                synchronized (capture) {
-                    capture.set(CV_CAP_PROP_EXPOSURE, exposure);
-                }
-            }
+        if (control != null) {
+            control.setExposure((int) exposure);
         }
     }
 
@@ -366,6 +368,7 @@ public class CameraCapture {
         if (!filename.equals(this.filename)) {
             this.filename = filename;
             connected = false;
+            control = null;
         }
     }
 
@@ -378,6 +381,7 @@ public class CameraCapture {
             this.device = device;
             filename = null;
             connected = false;
+            control = new V4LControl(device);
         }
     }
 }

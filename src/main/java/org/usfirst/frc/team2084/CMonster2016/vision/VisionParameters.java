@@ -60,11 +60,14 @@ public class VisionParameters {
     private static final String STREAM_QUALITY_KEY = "str_qual";
 
     private static final String SHUTDOWN_KEY = "shutdown";
+    private static final String SNAPSHOT_KEY = "snapshot";
 
     public static final ITable VISION_PARAMETERS = NetworkTable.getTable("Vision").getSubTable("Parameters");
 
     static {
         setAutoExposure(true);
+        VISION_PARAMETERS.putBoolean(SNAPSHOT_KEY, false);
+        VISION_PARAMETERS.putBoolean(SHUTDOWN_KEY, false);
     }
 
     public static void setCameraSource(String source) {
@@ -231,6 +234,18 @@ public class VisionParameters {
             VISION_PARAMETERS.putBoolean(SHUTDOWN_KEY, false);
         }
         return shutdown;
+    }
+
+    public static void takeSnapshot() {
+        VISION_PARAMETERS.putBoolean(SNAPSHOT_KEY, true);
+    }
+
+    public static boolean shouldTakeSnapshot() {
+        boolean snapshot = VISION_PARAMETERS.getBoolean(SNAPSHOT_KEY, false);
+        if (snapshot) {
+            VISION_PARAMETERS.putBoolean(SNAPSHOT_KEY, false);
+        }
+        return snapshot;
     }
 
     private VisionParameters() {

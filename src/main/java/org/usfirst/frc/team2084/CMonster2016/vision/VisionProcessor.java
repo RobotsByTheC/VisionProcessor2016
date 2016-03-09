@@ -49,7 +49,7 @@ public abstract class VisionProcessor {
 
     protected static final ITable VISION_RESULTS = NetworkTable.getTable("Vision").getSubTable("Results");
     private final ArrayList<ImageHandler> imageHandlers = new ArrayList<>(1);
-    private final CameraCapture camera;
+    protected final CameraCapture camera;
     private final Thread processorThread = new Thread(new ProcessorThread());
     private final Mat cameraImage = new Mat();
     private final Mat processedImage = new Mat();

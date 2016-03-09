@@ -124,6 +124,16 @@ public class HighGoalProcessor extends VisionProcessor {
 
     @Override
     public void process(Mat image, Mat outImage) {
+        // Update camera exposure
+        camera.setExposure(VisionParameters.getExposure());
+        camera.setAutoExposure(VisionParameters.getAutoExposure());
+
+        if (VisionParameters.shouldTakeSnapshot()) {
+            String path = System.getProperty("user.home") + "/vision_snapshots/" + System.currentTimeMillis() + ".png";
+            if (!Imgcodecs.imwrite(path, image)) {
+                System.err.println("Could not save snapshot to: " + path);
+            }
+        }
 
         synchronized (this.image) {
             image.copyTo(this.image);

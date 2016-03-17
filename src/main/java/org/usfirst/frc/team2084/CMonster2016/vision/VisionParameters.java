@@ -30,7 +30,7 @@ public class VisionParameters {
     public static final double DEFAULT_FOV_ANGLE = Math.toRadians(64.94);
     public static final boolean DEFAULT_AUTO_EXPOSURE = true;
     public static final double DEFAULT_EXPOSURE = 0;
-    public static final int DEFAULT_STREAM_QUALITY = 95;
+    public static final int DEFAULT_STREAM_QUALITY = 20;
 
     private static final String CAMERA_SOURCE_KEY = "camera_source";
 

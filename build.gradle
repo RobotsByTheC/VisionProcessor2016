@@ -21,7 +21,83 @@ repositories {
 apply plugin: 'com.google.osdetector'
 apply plugin: 'java'
 apply plugin: 'eclipse'
+apply plugin: 'cpp'
 
+def java_home = System.properties['java.home']
+
+model {
+
+  repositories {
+    libs(PrebuiltLibraries) {
+      def opencv_include = "lib/opencv-3.1.0-include"
+    
+      opencv_imgproc {
+        headers.srcDir opencv_include
+        binaries.withType(StaticLibraryBinary){
+        	staticLibraryFile = file('lib/opencv-build/lib/libopencv_imgproc.a')
+        }
+      }
+      opencv_core {
+        headers.srcDir opencv_include
+        binaries.withType(StaticLibraryBinary){
+        	staticLibraryFile = file('lib/opencv-build/lib/libopencv_core.a')
+        }
+      }
+      jni {
+        headers.srcDir java_home + "/../include"
+      	if (System.properties['os.name'].equals('Mac OS X')) {
+     		headers.srcDir "$java_home/../include/darwin"
+     	} else {
+     		headers.srcDir "$java_home/../include/linux"
+     	}     	
+      }
+    }
+  }
+
+  components {
+    gpuvision(NativeLibrarySpec) {
+            sources {            
+                cpp.lib library: 'jni', linkage: 'api'
+                cpp {
+                    source {
+                        srcDir 'src/main/jni'
+                        //include "**/*.cpp"
+                    }
+                    lib library: 'opencv_imgproc', linkage: 'static'
+                    lib library: 'opencv_core', linkage: 'static'
+                }
+            }
+            buildTypes {
+                release
+            }
+        }
+    }
+        
+    tasks {
+    	copyLibGpuvision(Copy) {
+    		dependsOn $.tasks.gpuvisionSharedLibrary
+    	
+    		from $.binaries.gpuvisionSharedLibrary.getSharedLibraryFile()
+    		into 'lib/gpuvision'
+		}
+		jar {
+			dependsOn $.tasks.copyLibGpuvision
+			from configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+		}
+    }
+}
+
+task nativeHeaders(dependsOn: ':classes') {
+    inputs.files sourceSets.main.output
+    outputs.dir "src/main/jni"
+      exec {
+        executable org.gradle.internal.jvm.Jvm.current().getExecutable('javah')
+          args '-d', "src/main/jni"
+          args '-classpath', "build/libs/VisionProcessor2016.jar"
+          args 'org.usfirst.frc.team2084.CMonster2016.vision.HighGoalProcessor'
+      }
+    
+  }
 
 configurations {
   compileOnly
@@ -52,6 +128,4 @@ dependencies {
   compileOnly 'edu.wpi.first.wpilib.networktables.java:NetworkTables:3.+:' + ntType
 }
 
-jar {
-  from configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
-}
+

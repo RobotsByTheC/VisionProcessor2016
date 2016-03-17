@@ -34,6 +34,10 @@ import org.usfirst.frc.team2084.CMonster2016.vision.capture.CameraCapture;
  */
 public class HighGoalProcessor extends VisionProcessor {
 
+    static {
+        System.load("/home/ben/Dropbox/Robotics/Code/2016/FRC/VisionProcessor2016/lib/gpuvision/libgpuvision.so");
+    }
+
     private class ProcessingThread implements Runnable {
 
         private final Mat localImage = new Mat();
@@ -82,9 +86,15 @@ public class HighGoalProcessor extends VisionProcessor {
         new Thread(new ProcessingThread()).start();
     }
 
+    private static native void processNative(long inputImageAddr, long outputImageAddr, int blurSize);
+
     private void doProcessing(Mat image) {
+
+        processNative(image.nativeObj, thresholdImage.nativeObj, VisionParameters.getBlurSize());
+
         // Convert the image to HSV, threshold it and find contours
-        List<MatOfPoint> contours = findContours(threshold(blur(convertToHsv(image))));
+        List<MatOfPoint> contours = findContours(
+                thresholdImage/* threshold(blur(convertToHsv(image))) */);
 
         // Array to hold blobs that possibly could be targets
         ArrayList<Target> possibleTargets = new ArrayList<>();
@@ -115,9 +125,9 @@ public class HighGoalProcessor extends VisionProcessor {
             target = null;
         }
 
-        debugImage("HSV", hsvImage);
+        // debugImage("HSV", hsvImage);
         debugImage("Threshold", thresholdImage);
-        debugImage("Blur", blurImage);
+        // debugImage("Blur", blurImage);
 
         processingFps = processingFpsCounter.update();
     }

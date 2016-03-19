@@ -51,13 +51,13 @@ model {
 			opencv_cudaimgproc {
 				headers.srcDir opencvIncludeDir
 				binaries.withType(StaticLibraryBinary){
-					staticLibraryFile = file("${opencvLibPath}/libopencv_imgproc.${staticLibExtension}")
+					staticLibraryFile = file("${opencvLibPath}/libopencv_cudaimgproc.${staticLibExtension}")
 				}
 			}
 			opencv_cudafilters {
 				headers.srcDir opencvIncludeDir
 				binaries.withType(StaticLibraryBinary){
-					staticLibraryFile = file("${opencvLibPath}/libopencv_imgproc.${staticLibExtension}")
+					staticLibraryFile = file("${opencvLibPath}/libopencv_cudafilters.${staticLibExtension}")
 				}
 			}
 			
@@ -65,12 +65,12 @@ model {
 			if (useCuda) {
 				cudart {
 					binaries.withType(StaticLibraryBinary){
-						staticLibraryFile = file("${cudaPath}/lib/libcudart_static.a")
+						staticLibraryFile = file("${cudaPath}/lib/libcudart_static.${staticLibExtension}")
 					}
 				}
 				nppi {
 					binaries.withType(StaticLibraryBinary){
-						staticLibraryFile = file("${cudaPath}/lib/libnppi_static.a")
+						staticLibraryFile = file("${cudaPath}/lib/libnppi_static.${staticLibExtension}")
 					}
 				}
 			}

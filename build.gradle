@@ -141,29 +141,16 @@ model {
 task nativeHeaders(dependsOn: ':classes') {
     inputs.files sourceSets.main.output
     outputs.dir "src/main/jni"
-      exec {
-        executable org.gradle.internal.jvm.Jvm.current().getExecutable('javah')
-          args '-d', "src/main/jni"
-          args '-classpath', "build/libs/VisionProcessor2016.jar"
-          args 'org.usfirst.frc.team2084.CMonster2016.vision.HighGoalProcessor'
-      }
-    
-  }
-
-configurations {
-  compileOnly
-}
-
-sourceSets.main.compileClasspath += configurations.compileOnly
-
-eclipse {
-  classpath {
-    plusConfigurations += [configurations.compileOnly]
-  }
+    exec {
+		executable org.gradle.internal.jvm.Jvm.current().getExecutable('javah')
+        args '-d', "src/main/jni"
+        args '-classpath', "build/libs/VisionProcessor2016.jar"
+		args 'org.usfirst.frc.team2084.CMonster2016.vision.HighGoalProcessor'
+	}
 }
 
 javadoc {
-  failOnError false
+	failOnError false
 }
 
 // This should not be changed without notifying everybody
@@ -171,12 +158,12 @@ String opencvVersion = "3.1.0"
 String opencvCode = opencvVersion.replace(".", "")
 
 dependencies {
-  compile files('lib/opencv-310.jar')
-  String ntType = "desktop"
-  if (osdetector.arch.contains("arm")) {
-  	ntType = "arm"
-  }
-  compileOnly 'edu.wpi.first.wpilib.networktables.java:NetworkTables:3.+:' + ntType
+	compile files('lib/opencv-310.jar')
+	String ntType = "desktop"
+	if (osdetector.arch.contains("arm")) {
+		ntType = "arm"
+	}
+	compileOnly 'edu.wpi.first.wpilib.networktables.java:NetworkTables:3.+:' + ntType
 }
 
 

@@ -10,10 +10,10 @@ extern "C" {
 /*
  * Class:     org_usfirst_frc_team2084_CMonster2016_vision_HighGoalProcessor
  * Method:    processNative
- * Signature: (JJI)V
+ * Signature: (JJIDDDDDD)V
  */
 JNIEXPORT void JNICALL Java_org_usfirst_frc_team2084_CMonster2016_vision_HighGoalProcessor_processNative
-  (JNIEnv *, jclass, jlong, jlong, jint);
+  (JNIEnv *, jclass, jlong, jlong, jint, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble);
 
 #ifdef __cplusplus
 }

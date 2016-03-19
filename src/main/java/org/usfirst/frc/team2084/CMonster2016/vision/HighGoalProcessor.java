@@ -34,10 +34,6 @@ import org.usfirst.frc.team2084.CMonster2016.vision.capture.CameraCapture;
  */
 public class HighGoalProcessor extends VisionProcessor {
 
-    static {
-        System.load("/home/ben/Dropbox/Robotics/Code/2016/FRC/VisionProcessor2016/lib/gpuvision/libgpuvision.so");
-    }
-
     private class ProcessingThread implements Runnable {
 
         private final Mat localImage = new Mat();
@@ -86,11 +82,15 @@ public class HighGoalProcessor extends VisionProcessor {
         new Thread(new ProcessingThread()).start();
     }
 
-    private static native void processNative(long inputImageAddr, long outputImageAddr, int blurSize);
+    private static native void processNative(long inputImageAddr, long outputImageAddr, int blurSize, double hMin,
+            double sMin, double vMin, double hMax, double sMax, double vMax);
 
     private void doProcessing(Mat image) {
 
-        processNative(image.nativeObj, thresholdImage.nativeObj, VisionParameters.getBlurSize());
+        double[] minThreshold = VisionParameters.getMinThreshold().val;
+        double[] maxThreshold = VisionParameters.getMaxThreshold().val;
+        processNative(image.nativeObj, thresholdImage.nativeObj, VisionParameters.getBlurSize(), minThreshold[0],
+                minThreshold[1], minThreshold[2], maxThreshold[0], maxThreshold[1], maxThreshold[2]);
 
         // Convert the image to HSV, threshold it and find contours
         List<MatOfPoint> contours = findContours(

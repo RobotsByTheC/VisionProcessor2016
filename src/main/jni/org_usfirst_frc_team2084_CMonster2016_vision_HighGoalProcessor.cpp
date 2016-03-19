@@ -14,6 +14,8 @@ cuda::GpuMat gpuBlurImage;
 
 Ptr<cuda::Filter> blurFilter;
 
+int oldBlurSize;
+
 bool gpu = cuda::getCudaEnabledDeviceCount() > 0;
 
 jint JNI_OnLoad(JavaVM *vm, void *reserved) {
@@ -25,36 +27,34 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved) {
 	return JNI_VERSION_1_2;
 }
 
-/*
- * Class:     org_usfirst_frc_team2084_CMonster2016_vision_HighGoalProcessor_GPU
- * Method:    process
- * Signature: (Lorg/opencv/core/Mat;)V
- */
 JNIEXPORT void JNICALL Java_org_usfirst_frc_team2084_CMonster2016_vision_HighGoalProcessor_processNative(JNIEnv * env, jclass clazz,
 		jlong inputImageAddr, jlong outputImageAddr,
-		jint blurSize) {
-	//std::cout << "Test"<< std::endl;
+		jint blurSize, jdouble hMin, jdouble sMin, jdouble vMin, jdouble hMax, jdouble sMax, jdouble vMax) {
 
 	Mat& image = *(Mat*) inputImageAddr;
 	Mat& thresholdImage = *(Mat*) outputImageAddr;
 
+	int kernelSize = 2 * blurSize + 1;
+
 	if(gpu) {
 		gpuImage.upload(image);
 		cuda::cvtColor(gpuImage, gpuHsvImage, CV_BGR2HSV);
+		if(oldBlurSize != blurSize) {
+			blurFilter = cuda::createGaussianFilter(CV_8UC3, CV_8UC3, Size(kernelSize, kernelSize), 0);
+		}
 		blurFilter->apply(gpuHsvImage, gpuBlurImage);
-		gpuBlurImage.download(thresholdImage);
+		gpuBlurImage.download(blurImage);
 	} else {
 		cvtColor(image, hsvImage, CV_BGR2HSV);
-		medianBlur(hsvImage, blurImage, 2 * blurSize + 1);
+		GaussianBlur(hsvImage, blurImage, Size(kernelSize, kernelSize), 0);
 	}
 
-	inRange(blurImage, Scalar(0, 0, 0), Scalar(50, 100, 150), thresholdImage);
+	oldBlurSize = blurSize;
 
-//	Mat gpuMat;
+	inRange(blurImage, Scalar(hMin, sMin, vMin), Scalar(hMax, sMax, vMax), thresholdImage);
 }
 
 void JNI_OnUnload(JavaVM *vm, void *reserved) {
-	std::cout << "Unload" << std::endl;
 	if (gpu) {
 		gpuImage.release();
 		gpuHsvImage.release();

@@ -25,34 +25,77 @@ apply plugin: 'cpp'
 
 def java_home = System.properties['java.home']
 
-model {
+def cudaPath = "/usr/local/cuda/"
+def useCuda = file(cudaPath).exists()
 
-  repositories {
-    libs(PrebuiltLibraries) {
-      def opencv_include = "lib/opencv-3.1.0-include"
+model {
+	repositories {
+		libs(PrebuiltLibraries) {
+			def opencvIncludeDir = "lib/opencv/include"
     
-      opencv_imgproc {
-        headers.srcDir opencv_include
-        binaries.withType(StaticLibraryBinary){
-        	staticLibraryFile = file('lib/opencv-build/lib/libopencv_imgproc.a')
+    		def staticLibExtension = osdetector.os == "windows" ? "lib" : "a"
+    		def opencvLibPath = "lib/opencv/${osdetector.os}/${osdetector.arch}"
+    
+			opencv_imgproc {
+				headers.srcDir opencvIncludeDir
+				binaries.withType(StaticLibraryBinary){
+					staticLibraryFile = file("${opencvLibPath}/libopencv_imgproc.${staticLibExtension}")
+				}
+			}
+			opencv_core {
+				headers.srcDir opencvIncludeDir
+				binaries.withType(StaticLibraryBinary){
+					staticLibraryFile = file("${opencvLibPath}/libopencv_core.${staticLibExtension}")
+				}
+			}
+			opencv_cudaimgproc {
+				headers.srcDir opencvIncludeDir
+				binaries.withType(StaticLibraryBinary){
+					staticLibraryFile = file("${opencvLibPath}/libopencv_imgproc.${staticLibExtension}")
+				}
+			}
+			opencv_cudafilters {
+				headers.srcDir opencvIncludeDir
+				binaries.withType(StaticLibraryBinary){
+					staticLibraryFile = file("${opencvLibPath}/libopencv_imgproc.${staticLibExtension}")
+				}
+			}
+			
+			
+			if (useCuda) {
+				cudart {
+					binaries.withType(StaticLibraryBinary){
+						staticLibraryFile = file("${cudaPath}/lib/libcudart_static.a")
+					}
+				}
+				nppi {
+					binaries.withType(StaticLibraryBinary){
+						staticLibraryFile = file("${cudaPath}/lib/libnppi_static.a")
+					}
+				}
+			}
+     
+			jni {
+				headers.srcDir java_home + "/../include"
+				if (osdetector.os == "osx") {
+					headers.srcDir "$java_home/../include/darwin"
+				} else if (osdetector.os == "linux") {
+					headers.srcDir "$java_home/../include/linux"
+				}     	
+			}
+		}
+	}
+  
+  toolChains {
+        gcc(Gcc) {
+            target("armv7")
         }
-      }
-      opencv_core {
-        headers.srcDir opencv_include
-        binaries.withType(StaticLibraryBinary){
-        	staticLibraryFile = file('lib/opencv-build/lib/libopencv_core.a')
-        }
-      }
-      jni {
-        headers.srcDir java_home + "/../include"
-      	if (System.properties['os.name'].equals('Mac OS X')) {
-     		headers.srcDir "$java_home/../include/darwin"
-     	} else {
-     		headers.srcDir "$java_home/../include/linux"
-     	}     	
-      }
     }
-  }
+    platforms {
+        armv7 {
+            architecture "arm-v7"
+        }
+    }
 
   components {
     gpuvision(NativeLibrarySpec) {
@@ -64,12 +107,20 @@ model {
                         //include "**/*.cpp"
                     }
                     lib library: 'opencv_imgproc', linkage: 'static'
+                    lib library: 'opencv_cudaimgproc', linkage: 'static'
+                    lib library: 'opencv_cudafilters', linkage: 'static'
                     lib library: 'opencv_core', linkage: 'static'
+                    if (useCuda) {
+                    	lib library: 'cudart', linkage: 'static'
+                    	lib library: 'nppi', linkage: 'static'
+                    }
+                    
                 }
             }
             buildTypes {
                 release
             }
+            targetPlatform "armv7"
         }
     }
         

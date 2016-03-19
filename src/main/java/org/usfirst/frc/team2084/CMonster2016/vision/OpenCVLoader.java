@@ -70,11 +70,18 @@ public final class OpenCVLoader {
 
         File[] searchPaths = concat(OPENCV_SEARCH_PATHS, additionalSearchPaths);
         for (File path : searchPaths) {
+            File gpuVisionPath = new File(path, "gpuvision/libgpuvision.so");
+            if (gpuVisionPath.exists()) {
+                System.out.println("Loading GPU Vision library: " + gpuVisionPath.getAbsolutePath());
+                System.load(gpuVisionPath.getAbsolutePath());
+            }
+
             path = new File(path, fileName);
             if (path.exists()) {
                 System.out.println("Loading OpenCV: " + path.getAbsolutePath());
                 System.load(path.getAbsolutePath());
             }
+
         }
     }
 }

@@ -16,6 +16,7 @@ repositories {
   maven {
 	url = "http://first.wpi.edu/FRC/roborio/maven/release"
   }
+  mavenCentral()
 }
 
 apply plugin: 'com.google.osdetector'
@@ -163,6 +164,7 @@ dependencies {
 	if (osdetector.arch.contains("arm")) {
 		ntType = "arm"
 	}
+	compile 'org.nanohttpd:nanohttpd:+'
 	compileOnly 'edu.wpi.first.wpilib.networktables.java:NetworkTables:3.+:' + ntType
 }
 

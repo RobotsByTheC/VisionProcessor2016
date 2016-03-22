@@ -6,20 +6,13 @@
  */
 package org.usfirst.frc.team2084.CMonster2016.vision;
 
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import javax.imageio.ImageIO;
-
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfByte;
 import org.opencv.core.MatOfInt;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.Point;
@@ -29,6 +22,8 @@ import org.opencv.imgproc.Imgproc;
 import org.usfirst.frc.team2084.CMonster2016.vision.capture.CameraCapture;
 
 /**
+ * Algorithm that finds the high goal on the FIRST Stronghold tower and
+ * calculates the robot's distance from it and the heading of the target.
  *
  * @author Ben Wolsieffer
  */
@@ -85,11 +80,35 @@ public class HighGoalProcessor extends VisionProcessor {
         new Thread(new ProcessingThread()).start();
     }
 
+    /**
+     * Native function that does the color conversion, blurring and thresholding
+     * of the image. This runs on the an Nvidia GPU if available.
+     * 
+     * @param inputImageAddr the address of the input image
+     * @param outputImageAddr the address of the image to write to
+     * @param blurSize the size of the gaussian blur kernel
+     * @param hMin the minimum hue
+     * @param sMin the minimum saturation
+     * @param vMin the minimum value
+     * @param hMax the maximum hue
+     * @param sMax the maximum saturation
+     * @param vMax the maximum value
+     */
     private static native void processNative(long inputImageAddr, long outputImageAddr, int blurSize, double hMin,
             double sMin, double vMin, double hMax, double sMax, double vMax);
 
+    /**
+     * Do the actual processing of the image. This runs in a background thread
+     * so that the stream can run as fast as possible. The algorithm has now
+     * been optimized to the point where it can match the capture frame rate ,so
+     * this is not as necessary anymore.
+     * 
+     * @param image the image to process
+     * @param imageHeading the robot's heading when the image was taken
+     */
     private void doProcessing(Mat image, double imageHeading) {
 
+        // Pass the raw threshold values and addresses to the native code
         double[] minThreshold = VisionParameters.getMinThreshold().val;
         double[] maxThreshold = VisionParameters.getMaxThreshold().val;
         processNative(image.nativeObj, thresholdImage.nativeObj, VisionParameters.getBlurSize(), minThreshold[0],
@@ -111,19 +130,15 @@ public class HighGoalProcessor extends VisionProcessor {
             }
         });
 
+        // Sort the targets to find the highest scoring one
         Collections.sort(possibleTargets);
 
         if (!possibleTargets.isEmpty()) {
-            for (int i = 0; i < possibleTargets.size(); i++) {
-                Target t = possibleTargets.get(i);
-                target = t;
-                if (i == possibleTargets.size() - 1) {
-                    VisionResults.setGoalHeading(imageHeading + t.getGoalXAngle());
-                    VisionResults.setGoalAngle(VisionResults.getShooterAngle() + t.getGoalYAngle());
-                    VisionResults.setGoalDistance(t.getDistance());
-                    VisionResults.update();
-                }
-            }
+            target = possibleTargets.get(possibleTargets.size() - 1);
+            VisionResults.setGoalHeading(imageHeading + target.getGoalXAngle());
+            VisionResults.setGoalAngle(VisionResults.getShooterAngle() + target.getGoalYAngle());
+            VisionResults.setGoalDistance(target.getDistance());
+            VisionResults.update();
         } else {
             target = null;
         }
@@ -141,6 +156,7 @@ public class HighGoalProcessor extends VisionProcessor {
         camera.setExposure(VisionParameters.getExposure());
         camera.setAutoExposure(VisionParameters.getAutoExposure());
 
+        // Save a snapshot if requested
         if (VisionParameters.shouldTakeSnapshot()) {
             String path = System.getProperty("user.home") + "/vision_snapshots/" + System.currentTimeMillis() + ".png";
             if (!Imgcodecs.imwrite(path, image)) {
@@ -148,6 +164,7 @@ public class HighGoalProcessor extends VisionProcessor {
             }
         }
 
+        // Copy the image for the processing thread
         synchronized (this.image) {
             image.copyTo(this.image);
             imageHeading = VisionResults.getCurrentHeading();
@@ -160,26 +177,11 @@ public class HighGoalProcessor extends VisionProcessor {
             localTarget.draw(outImage, true);
         }
 
+        // Draw the frame rates
         Imgproc.putText(outImage, "Vision FPS: " + Target.NUMBER_FORMAT.format(processingFps), new Point(20, 70),
                 Core.FONT_HERSHEY_PLAIN, Target.TEXT_SIZE, Target.TEXT_COLOR);
         Imgproc.putText(outImage, "Stream FPS: " + Target.NUMBER_FORMAT.format(streamingFpsCounter.update()),
                 new Point(20, 90), Core.FONT_HERSHEY_PLAIN, Target.TEXT_SIZE, Target.TEXT_COLOR);
-    }
-
-    public BufferedImage matToBufferedImage(Mat m) {
-        MatOfByte matOfByte = new MatOfByte();
-
-        Imgcodecs.imencode(".jpg", m, matOfByte);
-
-        byte[] byteArray = matOfByte.toArray();
-        BufferedImage bufImage = null;
-
-        try {
-            InputStream in = new ByteArrayInputStream(byteArray);
-            bufImage = ImageIO.read(in);
-        } catch (IOException e) {
-        }
-        return bufImage;
     }
 
     private final Mat hsvImage = new Mat();

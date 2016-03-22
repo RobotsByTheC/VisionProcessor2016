@@ -42,6 +42,7 @@ public class HighGoalProcessor extends VisionProcessor {
         public void run() {
             while (true) {
                 boolean localNewImage = false;
+                double localImageHeading;
                 synchronized (image) {
                     try {
                         image.wait();
@@ -52,9 +53,10 @@ public class HighGoalProcessor extends VisionProcessor {
                         localNewImage = true;
                         image.copyTo(localImage);
                     }
+                    localImageHeading = imageHeading;
                 }
                 if (localNewImage) {
-                    doProcessing(localImage);
+                    doProcessing(localImage, localImageHeading);
                 }
             }
         }
@@ -62,6 +64,7 @@ public class HighGoalProcessor extends VisionProcessor {
 
     private volatile boolean newImage;
     private final Mat image = new Mat();
+    private volatile double imageHeading;
     private volatile Target target;
     private volatile double processingFps;
 
@@ -85,7 +88,7 @@ public class HighGoalProcessor extends VisionProcessor {
     private static native void processNative(long inputImageAddr, long outputImageAddr, int blurSize, double hMin,
             double sMin, double vMin, double hMax, double sMax, double vMax);
 
-    private void doProcessing(Mat image) {
+    private void doProcessing(Mat image, double imageHeading) {
 
         double[] minThreshold = VisionParameters.getMinThreshold().val;
         double[] maxThreshold = VisionParameters.getMaxThreshold().val;
@@ -115,7 +118,7 @@ public class HighGoalProcessor extends VisionProcessor {
                 Target t = possibleTargets.get(i);
                 target = t;
                 if (i == possibleTargets.size() - 1) {
-                    VisionResults.setGoalHeading(VisionResults.getCurrentHeading() + t.getGoalXAngle());
+                    VisionResults.setGoalHeading(imageHeading + t.getGoalXAngle());
                     VisionResults.setGoalAngle(VisionResults.getShooterAngle() + t.getGoalYAngle());
                     VisionResults.setGoalDistance(t.getDistance());
                     VisionResults.update();
@@ -147,6 +150,7 @@ public class HighGoalProcessor extends VisionProcessor {
 
         synchronized (this.image) {
             image.copyTo(this.image);
+            imageHeading = VisionResults.getCurrentHeading();
             newImage = true;
             this.image.notify();
         }

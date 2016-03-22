@@ -5,8 +5,8 @@
 
 using namespace cv;
 
-Mat hsvImage;
-Mat blurImage;
+UMat hsvImage;
+UMat blurImage;
 
 cuda::GpuMat gpuImage;
 cuda::GpuMat gpuHsvImage;
@@ -31,7 +31,7 @@ JNIEXPORT void JNICALL Java_org_usfirst_frc_team2084_CMonster2016_vision_HighGoa
 		jlong inputImageAddr, jlong outputImageAddr,
 		jint blurSize, jdouble hMin, jdouble sMin, jdouble vMin, jdouble hMax, jdouble sMax, jdouble vMax) {
 
-	Mat& image = *(Mat*) inputImageAddr;
+	UMat image = (*(Mat*) inputImageAddr).getUMat(ACCESS_READ);
 	Mat& thresholdImage = *(Mat*) outputImageAddr;
 
 	int kernelSize = 2 * blurSize + 1;

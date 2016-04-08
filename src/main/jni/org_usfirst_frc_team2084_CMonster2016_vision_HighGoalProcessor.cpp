@@ -36,7 +36,7 @@ JNIEXPORT void JNICALL Java_org_usfirst_frc_team2084_CMonster2016_vision_HighGoa
 
 	int kernelSize = 2 * blurSize + 1;
 
-	if(gpu) {
+	if (gpu) {
 		gpuImage.upload(image);
 		cuda::cvtColor(gpuImage, gpuHsvImage, CV_BGR2HSV);
 		if(oldBlurSize != blurSize) {

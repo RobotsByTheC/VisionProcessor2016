@@ -63,6 +63,8 @@ public class VisionParameters {
     private static final String SHUTDOWN_KEY = "shutdown";
     private static final String SNAPSHOT_KEY = "snapshot";
 
+    private static final String INTAKE_CAMERA_KEY = "intake_cam";
+
     private static final String STREAM_IP_KEY = "stream_ip";
 
     public static final ITable VISION_PARAMETERS = NetworkTable.getTable("Vision").getSubTable("Parameters");
@@ -115,23 +117,30 @@ public class VisionParameters {
     }
 
     public static Range getHThreshold() {
-        return new Range((int) VISION_PARAMETERS.getNumber(H_MIN_KEY, DEFAULT_H_THRESHOLD.getMin()), (int) VISION_PARAMETERS.getNumber(H_MAX_KEY, DEFAULT_H_THRESHOLD.getMax()));
+        return new Range((int) VISION_PARAMETERS.getNumber(H_MIN_KEY, DEFAULT_H_THRESHOLD.getMin()),
+                (int) VISION_PARAMETERS.getNumber(H_MAX_KEY, DEFAULT_H_THRESHOLD.getMax()));
     }
 
     public static Range getSThreshold() {
-        return new Range((int) VISION_PARAMETERS.getNumber(S_MIN_KEY, DEFAULT_S_THRESHOLD.getMin()), (int) VISION_PARAMETERS.getNumber(S_MAX_KEY, DEFAULT_S_THRESHOLD.getMax()));
+        return new Range((int) VISION_PARAMETERS.getNumber(S_MIN_KEY, DEFAULT_S_THRESHOLD.getMin()),
+                (int) VISION_PARAMETERS.getNumber(S_MAX_KEY, DEFAULT_S_THRESHOLD.getMax()));
     }
 
     public static Range getVThreshold() {
-        return new Range((int) VISION_PARAMETERS.getNumber(V_MIN_KEY, DEFAULT_V_THRESHOLD.getMin()), (int) VISION_PARAMETERS.getNumber(V_MAX_KEY, DEFAULT_V_THRESHOLD.getMax()));
+        return new Range((int) VISION_PARAMETERS.getNumber(V_MIN_KEY, DEFAULT_V_THRESHOLD.getMin()),
+                (int) VISION_PARAMETERS.getNumber(V_MAX_KEY, DEFAULT_V_THRESHOLD.getMax()));
     }
 
     public static Scalar getMinThreshold() {
-        return new Scalar(VISION_PARAMETERS.getNumber(H_MIN_KEY, DEFAULT_H_THRESHOLD.getMin()), VISION_PARAMETERS.getNumber(S_MIN_KEY, DEFAULT_S_THRESHOLD.getMin()), (int) VISION_PARAMETERS.getNumber(V_MIN_KEY, DEFAULT_V_THRESHOLD.getMin()));
+        return new Scalar(VISION_PARAMETERS.getNumber(H_MIN_KEY, DEFAULT_H_THRESHOLD.getMin()),
+                VISION_PARAMETERS.getNumber(S_MIN_KEY, DEFAULT_S_THRESHOLD.getMin()),
+                (int) VISION_PARAMETERS.getNumber(V_MIN_KEY, DEFAULT_V_THRESHOLD.getMin()));
     }
 
     public static Scalar getMaxThreshold() {
-        return new Scalar(VISION_PARAMETERS.getNumber(H_MAX_KEY, DEFAULT_H_THRESHOLD.getMax()), VISION_PARAMETERS.getNumber(S_MAX_KEY, DEFAULT_S_THRESHOLD.getMax()), (int) VISION_PARAMETERS.getNumber(V_MAX_KEY, DEFAULT_V_THRESHOLD.getMax()));
+        return new Scalar(VISION_PARAMETERS.getNumber(H_MAX_KEY, DEFAULT_H_THRESHOLD.getMax()),
+                VISION_PARAMETERS.getNumber(S_MAX_KEY, DEFAULT_S_THRESHOLD.getMax()),
+                (int) VISION_PARAMETERS.getNumber(V_MAX_KEY, DEFAULT_V_THRESHOLD.getMax()));
 
     }
 
@@ -152,7 +161,8 @@ public class VisionParameters {
     }
 
     public static double getMinRectangularityHeightScore() {
-        return VISION_PARAMETERS.getNumber(MIN_RECTANGULARITY_HEIGHT_SCORE_KEY, DEFAULT_MIN_RECTANGULARITY_HEIGHT_SCORE);
+        return VISION_PARAMETERS.getNumber(MIN_RECTANGULARITY_HEIGHT_SCORE_KEY,
+                DEFAULT_MIN_RECTANGULARITY_HEIGHT_SCORE);
     }
 
     public static void setMinRectangularityHeightScore(double score) {
@@ -219,14 +229,22 @@ public class VisionParameters {
         return (int) VISION_PARAMETERS.getNumber(STREAM_QUALITY_KEY, DEFAULT_STREAM_QUALITY);
     }
 
+    public static boolean isIntakeCamera() {
+        return VISION_PARAMETERS.getBoolean(INTAKE_CAMERA_KEY, false);
+    }
+
+    public static void setIntakeCamera(boolean intakeCam) {
+        VISION_PARAMETERS.putBoolean(INTAKE_CAMERA_KEY, intakeCam);
+    }
+
     public static void setStreamIP(String ip) {
         VISION_PARAMETERS.putString(STREAM_IP_KEY, ip);
     }
 
     public static String getStreamIP() {
-        return  VISION_PARAMETERS.getString(STREAM_IP_KEY, DEFAULT_STREAM_IP);
+        return VISION_PARAMETERS.getString(STREAM_IP_KEY, DEFAULT_STREAM_IP);
     }
-    
+
     public static void shutdown() {
         VISION_PARAMETERS.putBoolean(SHUTDOWN_KEY, true);
     }

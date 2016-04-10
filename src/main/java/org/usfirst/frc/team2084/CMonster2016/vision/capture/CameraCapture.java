@@ -45,7 +45,7 @@ public class CameraCapture {
                             // synchronization.
 
                             // Copy grabbed image
-                            if (!(capture.grab() && capture.retrieve(retrievedImage))) {
+                            if (!capture.read(retrievedImage)) {
                                 connected = false;
                             } else {
                                 // If it succeeded, set the newImage flag.

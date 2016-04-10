@@ -25,7 +25,7 @@ import org.opencv.imgcodecs.Imgcodecs;
 public class UDPVideoServer {
 
     public static final int PORT = 5802;
-    
+
     /**
      * Matrix that hold the JPEG quality parameters.
      */
@@ -105,7 +105,7 @@ public class UDPVideoServer {
     }
 
     private String oldIP = "";
-    
+
     /**
      * Sends an image to all connected clients. This blocks until the image is
      * sent.
@@ -120,9 +120,9 @@ public class UDPVideoServer {
             // Encode the image as a JPEG.
             Imgcodecs.imencode(".jpg", image, compressionBuffer, qualityParams);
             int size = (int) compressionBuffer.total() * compressionBuffer.channels();
-            
+
             String ip = VisionParameters.getStreamIP();
-            
+
             // Resize the Java buffer to fit the data if necessary
             if (size > socketBuffer.length) {
                 socketBuffer = new byte[size];
@@ -131,12 +131,17 @@ public class UDPVideoServer {
             // Copy the OpenCV data to a Java byte[].
             compressionBuffer.get(0, 0, socketBuffer);
 
-            if(!ip.equals(oldIP)) {
+            if (!ip.equals(oldIP)) {
                 oldIP = ip;
                 packet.setAddress(InetAddress.getByName(ip));
             }
-            packet.setLength(size);
-            socket.send(packet);
+            try {
+                packet.setLength(size);
+                socket.send(packet);
+            } catch (IllegalArgumentException ex) {
+                // No idea why this is thrown sometimes. Race condition?
+                System.out.println("Illegal size: " + size);
+            }
         } else {
             throw new IllegalStateException("Server must be running to send an image.");
         }

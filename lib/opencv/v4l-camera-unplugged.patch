@@ -76,7 +76,7 @@ index 46fac95..6f89f4a 100644
     } else
     {
 diff --git a/modules/videoio/src/cap_v4l.cpp b/modules/videoio/src/cap_v4l.cpp
-index 36dd928..1e1d3b9 100644
+index 36dd928..f4a0f0c 100644
 --- a/modules/videoio/src/cap_v4l.cpp
 +++ b/modules/videoio/src/cap_v4l.cpp
 @@ -806,6 +806,11 @@ bool CvCaptureCAM_V4L::open(int _index)
@@ -131,7 +131,7 @@ index 36dd928..1e1d3b9 100644
      unsigned int count;
  
      count = 1;
-@@ -886,8 +891,12 @@ static void mainloop_v4l2(CvCaptureCAM_V4L* capture) {
+@@ -886,10 +891,15 @@ static void mainloop_v4l2(CvCaptureCAM_V4L* capture) {
                  break;
              }
  
@@ -145,8 +145,11 @@ index 36dd928..1e1d3b9 100644
 +            }
          }
      }
++    return false;
  }
-@@ -914,6 +923,7 @@ static bool icvGrabFrameCAM_V4L(CvCaptureCAM_V4L* capture) {
+ 
+ static bool icvGrabFrameCAM_V4L(CvCaptureCAM_V4L* capture) {
+@@ -914,6 +924,7 @@ static bool icvGrabFrameCAM_V4L(CvCaptureCAM_V4L* capture) {
  
            if (-1 == ioctl (capture->deviceHandle, VIDIOC_QBUF, &buf)) {
                perror ("VIDIOC_QBUF");
@@ -154,7 +157,7 @@ index 36dd928..1e1d3b9 100644
                return false;
            }
          }
-@@ -931,14 +941,20 @@ static bool icvGrabFrameCAM_V4L(CvCaptureCAM_V4L* capture) {
+@@ -931,14 +942,20 @@ static bool icvGrabFrameCAM_V4L(CvCaptureCAM_V4L* capture) {
  #if defined(V4L_ABORT_BADJPEG)
          // skip first frame. it is often bad -- this is unnotied in traditional apps,
          //  but could be fatal if bad jpeg is enabled

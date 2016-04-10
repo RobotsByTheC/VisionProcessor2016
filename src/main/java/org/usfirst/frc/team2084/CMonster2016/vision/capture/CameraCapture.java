@@ -22,6 +22,8 @@ import org.opencv.videoio.Videoio;
  */
 public class CameraCapture {
 
+    private static final Object lock = new Object();
+
     /**
      * Implementation of the thread that does the actually capturing of the
      * image from the camera.
@@ -41,9 +43,9 @@ public class CameraCapture {
                         synchronized (capture) {
                             // Grab the image outside of the image
                             // synchronization.
-                            capture.grab();
+
                             // Copy grabbed image
-                            if (!capture.retrieve(retrievedImage)) {
+                            if (!(capture.grab() && capture.retrieve(retrievedImage))) {
                                 connected = false;
                             } else {
                                 // If it succeeded, set the newImage flag.
@@ -66,13 +68,15 @@ public class CameraCapture {
                         synchronized (capture) {
                             try {
                                 // Open either a device number or filename.
-                                if (filename == null) {
-                                    if (capture.open(device)) {
-                                        connected = true;
-                                    }
-                                } else {
-                                    if (capture.open(filename)) {
-                                        connected = true;
+                                synchronized (lock) {
+                                    if (filename == null) {
+                                        if (capture.open(device)) {
+                                            connected = true;
+                                        }
+                                    } else {
+                                        if (capture.open(filename)) {
+                                            connected = true;
+                                        }
                                     }
                                 }
                                 if (connected) {
@@ -234,7 +238,17 @@ public class CameraCapture {
      * @param image a {@link Mat} to copy the captured image into
      */
     public void capture(Mat image) {
+        capture(image, 0);
+    }
+
+    /**
+     * Gets the latest image captured from the camera.
+     * 
+     * @param image a {@link Mat} to copy the captured image into
+     */
+    public boolean capture(Mat image, long timeout) {
         if (running) {
+            long startTime = System.currentTimeMillis();
 
             // Wait for an image from the camera
             while (!newImage) {
@@ -242,8 +256,11 @@ public class CameraCapture {
                 // and image.
                 synchronized (imageNotifier) {
                     try {
-                        imageNotifier.wait();
+                        imageNotifier.wait(timeout);
                     } catch (InterruptedException e) {
+                    }
+                    if (System.currentTimeMillis() - startTime >= timeout && timeout > 0) {
+                        return false;
                     }
                 }
             }
@@ -254,6 +271,7 @@ public class CameraCapture {
                 newImage = false;
                 this.image.copyTo(image);
             }
+            return true;
         } else {
             // Throw an exception if the capture is not running.
             throw new IllegalStateException("Camera must be running to capture an image.");

@@ -7,7 +7,6 @@
 package org.usfirst.frc.team2084.CMonster2016.vision;
 
 import org.opencv.core.Mat;
-import org.usfirst.frc.team2084.CMonster2016.vision.capture.CameraCapture;
 
 /**
  * A vision processor that does nothing. Originally created to debug performance
@@ -20,12 +19,11 @@ public class NullProcessor extends VisionProcessor {
     /**
      * @param capture
      */
-    public NullProcessor(CameraCapture capture) {
-        super(capture);
+    public NullProcessor() {
     }
 
     @Override
-    protected void process(Mat cameraImage, Mat outputImage) {
+    public void process(Mat cameraImage) {
         // No-op
     }
 

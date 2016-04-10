@@ -17,7 +17,6 @@ import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
-import org.usfirst.frc.team2084.CMonster2016.vision.capture.CameraCapture;
 
 /**
  * @author Ben Wolsieffer
@@ -43,12 +42,11 @@ public class BallProcessor extends VisionProcessor {
     /**
      * @param capture
      */
-    public BallProcessor(CameraCapture capture) {
-        super(capture);
+    public BallProcessor() {
     }
 
     @Override
-    protected void process(Mat cameraImage, Mat outputImage) {
+    public void process(Mat cameraImage) {
         Imgproc.blur(cameraImage, hsvImage, new Size(20, 20));
 
         Imgproc.cvtColor(hsvImage, hsvImage, Imgproc.COLOR_BGR2HSV);
@@ -65,7 +63,7 @@ public class BallProcessor extends VisionProcessor {
         hulls.clear();
 
         Imgproc.findContours(contourImage, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
-        Imgproc.drawContours(outputImage, contours, -1, CONTOUR_COLOR);
+        Imgproc.drawContours(cameraImage, contours, -1, CONTOUR_COLOR);
 
         for (int i = 0; i < contours.size(); i++) {
             MatOfPoint contour = contours.get(i);
@@ -84,7 +82,7 @@ public class BallProcessor extends VisionProcessor {
 
         }
 
-        Imgproc.drawContours(outputImage, hulls, -1, CONTOUR_COLOR);
+        Imgproc.drawContours(cameraImage, hulls, -1, CONTOUR_COLOR);
 
         debugImage("Threshold Image", thresholdImage);
         // debugImage("Contour Image", contourImage);

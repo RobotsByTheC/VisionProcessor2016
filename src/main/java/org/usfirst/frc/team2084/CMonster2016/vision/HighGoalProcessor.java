@@ -63,6 +63,8 @@ public class HighGoalProcessor extends VisionProcessor {
     private volatile Target target;
     private volatile double processingFps;
 
+    private final CameraCapture camera;
+
     private final FramerateCounter processingFpsCounter = new FramerateCounter();
     private final FramerateCounter streamingFpsCounter = new FramerateCounter();
 
@@ -72,11 +74,10 @@ public class HighGoalProcessor extends VisionProcessor {
      * @param capture
      */
     public HighGoalProcessor(CameraCapture capture) {
-        super(capture);
-
         if (capture != null) {
             capture.setResolution(IMAGE_SIZE);
         }
+        this.camera = capture;
         new Thread(new ProcessingThread()).start();
     }
 
@@ -151,7 +152,7 @@ public class HighGoalProcessor extends VisionProcessor {
     }
 
     @Override
-    public void process(Mat image, Mat outImage) {
+    public void process(Mat image) {
         // Update camera exposure
         camera.setExposure(VisionParameters.getExposure());
         camera.setAutoExposure(VisionParameters.getAutoExposure());
@@ -174,13 +175,13 @@ public class HighGoalProcessor extends VisionProcessor {
 
         Target localTarget = target;
         if (localTarget != null) {
-            localTarget.draw(outImage, true);
+            localTarget.draw(image, true);
         }
 
         // Draw the frame rates
-        Imgproc.putText(outImage, "Vision FPS: " + Target.NUMBER_FORMAT.format(processingFps), new Point(20, 70),
+        Imgproc.putText(image, "Vision FPS: " + Target.NUMBER_FORMAT.format(processingFps), new Point(20, 70),
                 Core.FONT_HERSHEY_PLAIN, Target.TEXT_SIZE, Target.TEXT_COLOR);
-        Imgproc.putText(outImage, "Stream FPS: " + Target.NUMBER_FORMAT.format(streamingFpsCounter.update()),
+        Imgproc.putText(image, "Stream FPS: " + Target.NUMBER_FORMAT.format(streamingFpsCounter.update()),
                 new Point(20, 90), Core.FONT_HERSHEY_PLAIN, Target.TEXT_SIZE, Target.TEXT_COLOR);
     }
 

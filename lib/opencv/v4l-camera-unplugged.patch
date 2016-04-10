@@ -1,0 +1,179 @@
+diff --git a/modules/videoio/src/cap_libv4l.cpp b/modules/videoio/src/cap_libv4l.cpp
+index 46fac95..6f89f4a 100644
+--- a/modules/videoio/src/cap_libv4l.cpp
++++ b/modules/videoio/src/cap_libv4l.cpp
+@@ -1092,6 +1092,11 @@ static CvCaptureCAM_V4L * icvCaptureFromCAM_V4L (int index)
+ 
+ #ifdef HAVE_CAMV4L2
+ 
++// Extra global values declared for error capture
++#define READ_FRAME_V4L2_FAIL 2
++#define READ_FRAME_V4L2_AGAIN 0
++#define READ_FRAME_V4L2_READY 1
++
+ static int read_frame_v4l2(CvCaptureCAM_V4L* capture) {
+     struct v4l2_buffer buf;
+ 
+@@ -1103,7 +1108,7 @@ static int read_frame_v4l2(CvCaptureCAM_V4L* capture) {
+     if (-1 == xioctl (capture->deviceHandle, VIDIOC_DQBUF, &buf)) {
+         switch (errno) {
+         case EAGAIN:
+-            return 0;
++            return READ_FRAME_V4L2_AGAIN;
+ 
+         case EIO:
+             /* Could ignore EIO, see spec. */
+@@ -1113,7 +1118,7 @@ static int read_frame_v4l2(CvCaptureCAM_V4L* capture) {
+         default:
+             /* display the error and stop processing */
+             perror ("VIDIOC_DQBUF");
+-            return 1;
++            return READ_FRAME_V4L2_FAIL;
+         }
+    }
+ 
+@@ -1138,10 +1143,10 @@ static int read_frame_v4l2(CvCaptureCAM_V4L* capture) {
+    capture->timestamp = buf.timestamp;   //printf( "timestamp update done \n");
+    capture->sequence = buf.sequence;
+ 
+-   return 1;
++   return READ_FRAME_V4L2_READY;
+ }
+ 
+-static void mainloop_v4l2(CvCaptureCAM_V4L* capture) {
++static bool mainloop_v4l2(CvCaptureCAM_V4L* capture) {
+     unsigned int count;
+ 
+     count = 1;
+@@ -1175,10 +1180,15 @@ static void mainloop_v4l2(CvCaptureCAM_V4L* capture) {
+                 break;
+             }
+ 
+-            if (read_frame_v4l2 (capture))
+-                break;
++            switch (read_frame_v4l2 (capture)) {
++                case READ_FRAME_V4L2_READY:
++                    return true;
++                case READ_FRAME_V4L2_FAIL:
++                    return false;
++            }
+         }
+     }
++    return false;
+ }
+ 
+ static int icvGrabFrameCAM_V4L(CvCaptureCAM_V4L* capture) {
+@@ -1246,7 +1256,10 @@ static int icvGrabFrameCAM_V4L(CvCaptureCAM_V4L* capture) {
+    if (capture->is_v4l2_device == 1)
+    {
+ 
+-     mainloop_v4l2(capture);
++     if (!mainloop_v4l2(capture)) {
++         fprintf( stderr, "VIDEOIO ERROR: V4L: Could not capture image.\n");
++         return 0;
++     }
+ 
+    } else
+    {
+diff --git a/modules/videoio/src/cap_v4l.cpp b/modules/videoio/src/cap_v4l.cpp
+index 36dd928..1e1d3b9 100644
+--- a/modules/videoio/src/cap_v4l.cpp
++++ b/modules/videoio/src/cap_v4l.cpp
+@@ -806,6 +806,11 @@ bool CvCaptureCAM_V4L::open(int _index)
+    return _capture_V4L2(this) == 1;
+ }
+ 
++// Extra global values declared for error capture
++#define READ_FRAME_V4L2_FAIL 2
++#define READ_FRAME_V4L2_AGAIN 0
++#define READ_FRAME_V4L2_READY 1
++
+ static int read_frame_v4l2(CvCaptureCAM_V4L* capture) {
+     v4l2_buffer buf = v4l2_buffer();
+ 
+@@ -815,22 +820,22 @@ static int read_frame_v4l2(CvCaptureCAM_V4L* capture) {
+     if (-1 == ioctl (capture->deviceHandle, VIDIOC_DQBUF, &buf)) {
+         switch (errno) {
+         case EAGAIN:
+-            return 0;
++            return READ_FRAME_V4L2_AGAIN;
+ 
+         case EIO:
+         if (!(buf.flags & (V4L2_BUF_FLAG_QUEUED | V4L2_BUF_FLAG_DONE)))
+         {
+           if (ioctl(capture->deviceHandle, VIDIOC_QBUF, &buf) == -1)
+           {
+-            return 0;
++            return READ_FRAME_V4L2_AGAIN;
+           }
+         }
+-        return 0;
++        return READ_FRAME_V4L2_AGAIN;
+ 
+         default:
+             /* display the error and stop processing */
+             perror ("VIDIOC_DQBUF");
+-            return 1;
++            return READ_FRAME_V4L2_FAIL;
+         }
+    }
+ 
+@@ -849,10 +854,10 @@ static int read_frame_v4l2(CvCaptureCAM_V4L* capture) {
+    //set timestamp in capture struct to be timestamp of most recent frame
+    capture->timestamp = buf.timestamp;
+ 
+-   return 1;
++   return READ_FRAME_V4L2_READY;
+ }
+ 
+-static void mainloop_v4l2(CvCaptureCAM_V4L* capture) {
++static bool mainloop_v4l2(CvCaptureCAM_V4L* capture) {
+     unsigned int count;
+ 
+     count = 1;
+@@ -886,8 +891,12 @@ static void mainloop_v4l2(CvCaptureCAM_V4L* capture) {
+                 break;
+             }
+ 
+-            if (read_frame_v4l2 (capture))
+-                break;
++            switch (read_frame_v4l2 (capture)) {
++                case READ_FRAME_V4L2_READY:
++                    return true;
++                case READ_FRAME_V4L2_FAIL:
++                    return false;
++            }
+         }
+     }
+ }
+@@ -914,6 +923,7 @@ static bool icvGrabFrameCAM_V4L(CvCaptureCAM_V4L* capture) {
+ 
+           if (-1 == ioctl (capture->deviceHandle, VIDIOC_QBUF, &buf)) {
+               perror ("VIDIOC_QBUF");
++              fprintf( stderr, "VIDEOIO ERROR: V4L: Could not capture image.\n");
+               return false;
+           }
+         }
+@@ -931,14 +941,20 @@ static bool icvGrabFrameCAM_V4L(CvCaptureCAM_V4L* capture) {
+ #if defined(V4L_ABORT_BADJPEG)
+         // skip first frame. it is often bad -- this is unnotied in traditional apps,
+         //  but could be fatal if bad jpeg is enabled
+-        mainloop_v4l2(capture);
++        if(!mainloop_v4l2(capture)) {
++            fprintf( stderr, "VIDEOIO ERROR: V4L: Could not capture image.\n");
++            return false;
++        }
+ #endif
+ 
+       /* preparation is ok */
+       capture->FirstCapture = 0;
+    }
+ 
+-   mainloop_v4l2(capture);
++   if(!mainloop_v4l2(capture)) {
++       fprintf( stderr, "VIDEOIO ERROR: V4L: Could not capture image.\n");
++       return false;
++   }
+ 
+    return true;
+ }

@@ -9,10 +9,6 @@ package org.usfirst.frc.team2084.CMonster2016.vision;
 import java.util.ArrayList;
 
 import org.opencv.core.Mat;
-import org.usfirst.frc.team2084.CMonster2016.vision.capture.CameraCapture;
-
-import edu.wpi.first.wpilibj.networktables.NetworkTable;
-import edu.wpi.first.wpilibj.tables.ITable;
 
 /**
  * Provides easy access to the vision processing algorithm. All the public
@@ -22,82 +18,40 @@ import edu.wpi.first.wpilibj.tables.ITable;
  */
 public abstract class VisionProcessor {
 
-    /**
-     * Thread that runs the OpenCV processing of the camera.
-     */
-    private class ProcessorThread implements Runnable {
+    @FunctionalInterface
+    public interface DebugHandler {
 
-        @Override
-        public void run() {
-            while (true) {
-                if (running) {
-                    camera.capture(cameraImage);
-                    cameraImage.copyTo(processedImage);
-                    process(cameraImage, processedImage);
-                    imageHandlers.forEach((handler) -> handler.imageProcessed(processedImage));
-                } else {
-                    synchronized (processorThread) {
-                        try {
-                            processorThread.wait();
-                        } catch (InterruptedException e) {
-                        }
-                    }
-                }
-            }
-        }
+        public void debugImage(String name, Mat image);
     }
 
-    protected static final ITable VISION_RESULTS = NetworkTable.getTable("Vision").getSubTable("Results");
-    private final ArrayList<ImageHandler> imageHandlers = new ArrayList<>(1);
-    protected final CameraCapture camera;
-    private final Thread processorThread = new Thread(new ProcessorThread());
-    private final Mat cameraImage = new Mat();
-    private final Mat processedImage = new Mat();
-    private boolean running = false;
+    private final ArrayList<DebugHandler> debugHandlers = new ArrayList<>(1);
 
     /**
      * 
      */
-    public VisionProcessor(CameraCapture capture) {
-        this.camera = capture;
+    public VisionProcessor() {
     }
 
-    public void start() {
-        camera.start();
-        running = true;
-        if (processorThread.isAlive()) {
-            synchronized (processorThread) {
-                processorThread.notifyAll();
-            }
-        } else {
-            processorThread.start();
-        }
+    public void addDebugHandler(DebugHandler handler) {
+        debugHandlers.add(handler);
     }
 
-    public void stop() {
-        running = false;
-        camera.stop();
-    }
-
-    public void addImageHandler(ImageHandler handler) {
-        imageHandlers.add(handler);
-    }
-
-    public void removeImageHandler(ImageHandler handler) {
-        imageHandlers.remove(handler);
+    public void removeDebugHandler(DebugHandler handler) {
+        debugHandlers.remove(handler);
     }
 
     protected void debugImage(String name, Mat image) {
-        imageHandlers.forEach((handler) -> handler.debugImage(name, image));
+        debugHandlers.forEach((handler) -> handler.debugImage(name, image));
     }
 
     /**
      * Called from the processing thread, this method should be overridden by
      * subclasses to implement their algorithm.
      * 
-     * @param cameraImage the image retrieved from the camera
+     * @param image the image retrieved from the camera
      * @param outputImage the image which to draw output onto, it starts out the
      *        same as the camera image
      */
-    protected abstract void process(Mat cameraImage, Mat outputImage);
+    public abstract void process(Mat image);
+
 }

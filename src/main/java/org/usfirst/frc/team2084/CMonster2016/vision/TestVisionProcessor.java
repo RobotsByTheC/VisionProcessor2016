@@ -7,7 +7,6 @@
 package org.usfirst.frc.team2084.CMonster2016.vision;
 
 import org.opencv.core.Mat;
-import org.usfirst.frc.team2084.CMonster2016.vision.capture.CameraCapture;
 
 /**
  * A vision processor used for testing. It does nothing, simply outputting the
@@ -22,15 +21,14 @@ public class TestVisionProcessor extends VisionProcessor {
      *
      * @param capture the camera to capture from
      */
-    public TestVisionProcessor(CameraCapture capture) {
-        super(capture);
+    public TestVisionProcessor() {
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    protected void process(Mat cameraImage, Mat outputImage) {
+    public void process(Mat cameraImage) {
         debugImage("Test", cameraImage);
     }
 

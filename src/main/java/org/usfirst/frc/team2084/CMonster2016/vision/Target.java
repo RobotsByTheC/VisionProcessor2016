@@ -48,7 +48,7 @@ public class Target implements Comparable<Target> {
      * The number of tests that produce a score. Used for calculating the
      * average score.
      */
-    private static final int NUM_SCORES = 3;
+    private static final int NUM_SCORES = 4;
 
     public static final double TARGET_WIDTH = 20.0 / 12.0;
     public static final double TARGET_HEIGHT = 12.0 / 12.0;
@@ -201,8 +201,7 @@ public class Target implements Comparable<Target> {
 
             double pixelsToFeet = TARGET_WIDTH / width;
 
-            distance = (TARGET_WIDTH * HighGoalProcessor.IMAGE_SIZE.width
-                    / (2 * width * Math.tan(VisionParameters.getFOVAngle() / 2)));
+            distance = (TARGET_WIDTH * HighGoalProcessor.IMAGE_SIZE.width / (2 * width * Math.tan(VisionParameters.getFOVAngle() / 2)));
 
             double xPosFeet = (center.x - (HighGoalProcessor.IMAGE_SIZE.width / 2)) * pixelsToFeet;
             double yPosFeet = -(center.y - (HighGoalProcessor.IMAGE_SIZE.height / 2)) * pixelsToFeet;
@@ -249,16 +248,11 @@ public class Target implements Comparable<Target> {
         Imgproc.circle(image, center, 5, drawColor);
 
         if (text) {
-            drawText(image, "       x: " + NUMBER_FORMAT.format(posFeet.x) + " ft", 0,
-                    HighGoalProcessor.IMAGE_SIZE.height - 85);
-            drawText(image, "       y: " + NUMBER_FORMAT.format(posFeet.y) + " ft", 0,
-                    HighGoalProcessor.IMAGE_SIZE.height - 65);
-            drawText(image, " x angle: " + NUMBER_FORMAT.format(Math.toDegrees(xGoalAngle)) + " deg", 0,
-                    HighGoalProcessor.IMAGE_SIZE.height - 45);
-            drawText(image, " y angle: " + NUMBER_FORMAT.format(Math.toDegrees(yGoalAngle)) + " deg", 0,
-                    HighGoalProcessor.IMAGE_SIZE.height - 25);
-            drawText(image, "distance: " + NUMBER_FORMAT.format(distance) + " ft", 0,
-                    HighGoalProcessor.IMAGE_SIZE.height - 5);
+            drawText(image, "       x: " + NUMBER_FORMAT.format(posFeet.x) + " ft", 0, HighGoalProcessor.IMAGE_SIZE.height - 85);
+            drawText(image, "       y: " + NUMBER_FORMAT.format(posFeet.y) + " ft", 0, HighGoalProcessor.IMAGE_SIZE.height - 65);
+            drawText(image, " x angle: " + NUMBER_FORMAT.format(Math.toDegrees(xGoalAngle)) + " deg", 0, HighGoalProcessor.IMAGE_SIZE.height - 45);
+            drawText(image, " y angle: " + NUMBER_FORMAT.format(Math.toDegrees(yGoalAngle)) + " deg", 0, HighGoalProcessor.IMAGE_SIZE.height - 25);
+            drawText(image, "distance: " + NUMBER_FORMAT.format(distance) + " ft", 0, HighGoalProcessor.IMAGE_SIZE.height - 5);
         }
 
     }
@@ -278,7 +272,7 @@ public class Target implements Comparable<Target> {
      * @return this target's score
      */
     private double calculateScore() {
-        double lScore = (scoreAspectRatio() + scoreRectangularityWidth() + scoreRectangularityHeight()) / NUM_SCORES;
+        double lScore = (scoreAspectRatio() + scoreRectangularityWidth() + scoreRectangularityHeight() + scorePosition()) / NUM_SCORES;
         if (Double.isNaN(lScore)) {
             valid = false;
         }
@@ -324,6 +318,10 @@ public class Target implements Comparable<Target> {
         }
         // System.out.println("rect height score: " + lScore);
         return lScore;
+    }
+
+    private double scorePosition() {
+        return 100 - ((center.x / HighGoalProcessor.IMAGE_SIZE.width) * 20);
     }
 
     public MatOfPoint getContour() {

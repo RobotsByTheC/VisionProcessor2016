@@ -272,7 +272,7 @@ public class Target implements Comparable<Target> {
      * @return this target's score
      */
     private double calculateScore() {
-        double lScore = (scoreAspectRatio() + scoreRectangularityWidth() + scoreRectangularityHeight() + scorePosition()) / NUM_SCORES;
+        double lScore = (scoreAspectRatio() + scoreRectangularityWidth() + scoreRectangularityHeight() + scoreSkew()) / NUM_SCORES;
         if (Double.isNaN(lScore)) {
             valid = false;
         }
@@ -320,8 +320,14 @@ public class Target implements Comparable<Target> {
         return lScore;
     }
 
-    private double scorePosition() {
-        return 100 - ((center.x / HighGoalProcessor.IMAGE_SIZE.width) * 20);
+    private double scoreSkew() {
+        double horizontalWidth = topRight.x - topRight.x;
+        if (horizontalWidth !=0) {
+            double angle = Math.atan((topLeft.y - topRight.y) / horizontalWidth);
+            return ratioToScore((angle / (Math.PI / 2)) + 1);
+        } else {
+            return 0;
+        }
     }
 
     public MatOfPoint getContour() {

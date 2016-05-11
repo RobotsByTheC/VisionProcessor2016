@@ -23,7 +23,6 @@ apply plugin: 'com.google.osdetector'
 apply plugin: 'java'
 apply plugin: 'eclipse'
 apply plugin: 'cpp'
-apply plugin: 'distribution'
 
 def java_home = System.properties['java.home']
 
@@ -140,7 +139,7 @@ model {
     }
 }
 
-task nativeHeaders(dependsOn: ':classes') {
+task nativeHeaders(dependsOn: ':jar') {
 	def classes = ["org.usfirst.frc.team2084.CMonster2016.vision.HighGoalProcessor",
 	               "org.usfirst.frc.team2084.CMonster2016.vision.BoulderProcessor"]
 	def files = classes.collect { sourceSets.main.output.classesDir.absolutePath + "/" +it.replace(".", "/") };

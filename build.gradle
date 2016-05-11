@@ -165,6 +165,7 @@ dependencies {
 		ntType = "arm"
 	}
 	compile 'org.nanohttpd:nanohttpd:+'
+	compile 'com.fazecast:jSerialComm:+'
 	compileOnly 'edu.wpi.first.wpilib.networktables.java:NetworkTables:3.+:' + ntType
 }
 

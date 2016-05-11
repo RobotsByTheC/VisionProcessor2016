@@ -18,12 +18,14 @@ public class VisionResults {
 
     public static final String HEADING_KEY = "heading";
     public static final String GOAL_HEADING_KEY = "goal_heading";
-    public static final String SHOOTER_ANGLE_KEY = "shooter_angle";
+    public static final String ARM_ANGLE_KEY = "shooter_angle";
     public static final String GOAL_ANGLE_KEY = "goal_angle";
     public static final String GOAL_DISTANCE_KEY = "goal_distance";
     public static final String UPDATE_KEY = "update";
+    public static final String BOULDER_BLOCKING_CAMERA_KEY = "boulder_blocking";
 
     public static final long STALE_TIMEOUT = 500;
+    public static final double DEFAULT_ARM_ANGLE = Math.toRadians(30);
 
     private static int updateCount = 0;
     private static boolean listenerRegistered = false;
@@ -37,7 +39,7 @@ public class VisionResults {
         if (!listenerRegistered) {
             VISION_RESULTS.addTableListener(UPDATE_KEY, (ITable source, String key, Object value, boolean isNew) -> {
                 lastUpdateTime = System.currentTimeMillis();
-            } , false);
+            }, false);
             listenerRegistered = true;
         }
 
@@ -60,12 +62,12 @@ public class VisionResults {
         VISION_RESULTS.putNumber(GOAL_HEADING_KEY, heading);
     }
 
-    public static double getShooterAngle() {
-        return VISION_RESULTS.getNumber(SHOOTER_ANGLE_KEY, 0);
+    public static double getArmAngle() {
+        return VISION_RESULTS.getNumber(ARM_ANGLE_KEY, DEFAULT_ARM_ANGLE);
     }
 
-    public static void setShooterAngle(double angle) {
-        VISION_RESULTS.putNumber(SHOOTER_ANGLE_KEY, angle);
+    public static void setArmAngle(double angle) {
+        VISION_RESULTS.putNumber(ARM_ANGLE_KEY, angle);
     }
 
     public static double getGoalAngle() {
@@ -82,6 +84,14 @@ public class VisionResults {
 
     public static void setGoalDistance(double distance) {
         VISION_RESULTS.putNumber(GOAL_DISTANCE_KEY, distance);
+    }
+
+    public static boolean isBoulderBlockingCamera() {
+        return VISION_RESULTS.getBoolean(BOULDER_BLOCKING_CAMERA_KEY, false);
+    }
+
+    public static void setBoulderBlockingCamera(boolean blocking) {
+        VISION_RESULTS.putBoolean(BOULDER_BLOCKING_CAMERA_KEY, blocking);
     }
 
     private VisionResults() {

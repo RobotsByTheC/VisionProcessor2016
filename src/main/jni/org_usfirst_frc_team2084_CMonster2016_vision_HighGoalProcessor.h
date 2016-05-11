@@ -7,6 +7,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#undef org_usfirst_frc_team2084_CMonster2016_vision_HighGoalProcessor_ESTIMATED_CAMERA_LATENCY
+#define org_usfirst_frc_team2084_CMonster2016_vision_HighGoalProcessor_ESTIMATED_CAMERA_LATENCY 0.1279
+#undef org_usfirst_frc_team2084_CMonster2016_vision_HighGoalProcessor_GYRO_UPDATE_RATE
+#define org_usfirst_frc_team2084_CMonster2016_vision_HighGoalProcessor_GYRO_UPDATE_RATE 60L
 /*
  * Class:     org_usfirst_frc_team2084_CMonster2016_vision_HighGoalProcessor
  * Method:    processNative

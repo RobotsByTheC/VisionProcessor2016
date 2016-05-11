@@ -23,6 +23,7 @@ apply plugin: 'com.google.osdetector'
 apply plugin: 'java'
 apply plugin: 'eclipse'
 apply plugin: 'cpp'
+apply plugin: 'distribution'
 
 def java_home = System.properties['java.home']
 
@@ -126,27 +127,31 @@ model {
     }
         
     tasks {
-    	copyLibGpuvision(Copy) {
+    	/*copyLibGpuvision {
     		dependsOn $.tasks.gpuvisionSharedLibrary
-    	
-    		from $.binaries.gpuvisionSharedLibrary.getSharedLibraryFile()
-    		into 'lib/gpuvision'
-		}
+    		println $.tasks
+    		inputs.file $.binaries.gpuvisionSharedLibrary.getSharedLibraryFile()
+    		outputs.file $.binaries.gpuvisionSharedLibrary.getSharedLibraryFile()
+		}*/
 		jar {
-			dependsOn $.tasks.copyLibGpuvision
+			//dependsOn $.tasks.copyLibGpuvision
 			from configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
 		}
     }
 }
 
 task nativeHeaders(dependsOn: ':classes') {
-    inputs.files sourceSets.main.output
+	def classes = ["org.usfirst.frc.team2084.CMonster2016.vision.HighGoalProcessor",
+	               "org.usfirst.frc.team2084.CMonster2016.vision.BoulderProcessor"]
+	def files = classes.collect { sourceSets.main.output.classesDir.absolutePath + "/" +it.replace(".", "/") };
+
+    inputs.files files
     outputs.dir "src/main/jni"
     exec {
 		executable org.gradle.internal.jvm.Jvm.current().getExecutable('javah')
         args '-d', "src/main/jni"
         args '-classpath', "build/libs/VisionProcessor2016.jar"
-		args 'org.usfirst.frc.team2084.CMonster2016.vision.HighGoalProcessor'
+		args classes
 	}
 }
 
@@ -164,6 +169,7 @@ dependencies {
 	if (osdetector.arch.contains("arm")) {
 		ntType = "arm"
 	}
+	runtime files('build/libs/gpuvision/shared/libgpuvision.so')
 	compile 'org.nanohttpd:nanohttpd:+'
 	compile 'com.fazecast:jSerialComm:+'
 	compileOnly 'edu.wpi.first.wpilib.networktables.java:NetworkTables:3.+:' + ntType

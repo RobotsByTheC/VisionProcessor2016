@@ -20,7 +20,9 @@ public final class OpenCVLoader {
             new File("lib/"),
             new File("../VisionProcessor2016/"),
             new File("./"),
-            new File("../VisionProcessor2016/lib/") };
+            new File("../VisionProcessor2016/lib/"),
+            new File("../VisionProcessor2016/build/libs/gpuvision/shared/"),
+            new File("build/libs/gpuvision/shared/") };
 
     private static <T> T[] concat(T[] first, T[] second) {
         if (second != null) {

@@ -7,11 +7,15 @@
 /* modifications to this code must be accompanied by the \License.txt file    */ 
 /* in the root directory of the project.                                      */
 /*----------------------------------------------------------------------------*/
-package com.kauailabs.navx.frc;
+package com.kauailabs.navx.desktop;
 
-interface IRegisterIO {
-    boolean init();
-    boolean write(byte address, byte value );
-    boolean read(byte first_address, byte[] buffer);
-    boolean shutdown();
+interface IIOProvider {
+    public boolean  isConnected();
+    public double   getByteCount();
+    public double   getUpdateCount();
+    public void     setUpdateRateHz(byte update_rate);
+    public void     zeroYaw();
+    public void     zeroDisplacement();
+    public void     run();
+    public void     stop();
 }

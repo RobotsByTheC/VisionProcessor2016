@@ -7,10 +7,11 @@
 /* modifications to this code must be accompanied by the \License.txt file    */ 
 /* in the root directory of the project.                                      */
 /*----------------------------------------------------------------------------*/
-package com.kauailabs.navx.frc;
+package com.kauailabs.navx.desktop;
 
-interface IBoardCapabilities {
-    public boolean isOmniMountSupported();
-    public boolean isBoardYawResetSupported();
-    public boolean isDisplacementSupported();
+interface IRegisterIO {
+    boolean init();
+    boolean write(byte address, byte value );
+    boolean read(byte first_address, byte[] buffer);
+    boolean shutdown();
 }

@@ -22,7 +22,7 @@
  ===============================================
  */
 
-package com.kauailabs.navx;
+package com.kauailabs.navx.desktop;
 
 
 public class AHRSProtocol extends IMUProtocol {

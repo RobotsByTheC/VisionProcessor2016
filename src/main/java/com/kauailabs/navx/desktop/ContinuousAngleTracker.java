@@ -7,7 +7,7 @@
 /* modifications to this code must be accompanied by the \License.txt file    */
 /* in the root directory of the project.                                      */
 /*----------------------------------------------------------------------------*/
-package com.kauailabs.navx.frc;
+package com.kauailabs.navx.desktop;
 
 class ContinuousAngleTracker {
 

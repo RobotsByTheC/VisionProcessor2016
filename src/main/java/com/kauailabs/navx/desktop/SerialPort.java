@@ -4,7 +4,7 @@
  * Open Source Software - may be modified and shared by FRC teams. The code must
  * be accompanied by the BSD license file in the root directory of the project.
  */
-package com.kauailabs.navx.frc;
+package com.kauailabs.navx.desktop;
 
 /**
  * @author ben
@@ -100,7 +100,6 @@ public class SerialPort {
     }
 
     public void reset() {
-        System.out.println("reset");
         port.closePort();
         port.openPort();
     }

@@ -5,13 +5,13 @@ buildscript {
 	mavenCentral()
   }
   dependencies {
-    classpath 'com.google.gradle:osdetector-gradle-plugin:1.4.0'
+	classpath 'com.google.gradle:osdetector-gradle-plugin:1.4.0'
   }
 }
 
 repositories {
   maven {
-    url "${System.getProperty('user.home')}/releases/maven/development"
+	url "${System.getProperty('user.home')}/releases/maven/development"
   }
   maven {
 	url = "http://first.wpi.edu/FRC/roborio/maven/release"
@@ -33,10 +33,10 @@ model {
 	repositories {
 		libs(PrebuiltLibraries) {
 			def opencvIncludeDir = "lib/opencv/include"
-    
-    		def staticLibExtension = osdetector.os == "windows" ? "lib" : "a"
-    		def opencvLibPath = "lib/opencv/${osdetector.os}/${osdetector.arch}"
-    
+	
+			def staticLibExtension = osdetector.os == "windows" ? "lib" : "a"
+			def opencvLibPath = "lib/opencv/${osdetector.os}/${osdetector.arch}"
+	
 			opencv_imgproc {
 				headers.srcDir opencvIncludeDir
 				binaries.withType(StaticLibraryBinary){
@@ -75,89 +75,89 @@ model {
 					}
 				}
 			}
-     
+	 
 			jni {
 				headers.srcDir java_home + "/../include"
 				if (osdetector.os == "osx") {
 					headers.srcDir "$java_home/../include/darwin"
 				} else if (osdetector.os == "linux") {
 					headers.srcDir "$java_home/../include/linux"
-				}     	
+				}	 	
 			}
 		}
 	}
   
-  toolChains {
-        gcc(Gcc) {
-            target("armv7")
-        }
-    }
-    platforms {
-        armv7 {
-            architecture "arm-v7"
-        }
-    }
+	toolChains {
+		gcc(Gcc) {
+			target("armv7")
+		}
+	}
+	platforms {
+		armv7 {
+			architecture "arm-v7"
+		}
+	}
 
-  components {
-    gpuvision(NativeLibrarySpec) {
-            sources {            
-                cpp.lib library: 'jni', linkage: 'api'
-                cpp {
-                    source {
-                        srcDir 'src/main/jni'
-                        //include "**/*.cpp"
-                    }
-                    lib library: 'opencv_imgproc', linkage: 'static'
-                    lib library: 'opencv_cudaimgproc', linkage: 'static'
-                    lib library: 'opencv_cudafilters', linkage: 'static'
-                    lib library: 'opencv_core', linkage: 'static'
-                    if (useCuda) {
-                    	lib library: 'cudart', linkage: 'static'
-                    	lib library: 'nppi', linkage: 'static'
-                    }
-                    
-                }
-            }
-            buildTypes {
-                release
-            }
-            targetPlatform "armv7"
-        }
-    }
-        
-    tasks {
-    	/*copyLibGpuvision {
-    		dependsOn $.tasks.gpuvisionSharedLibrary
-    		println $.tasks
-    		inputs.file $.binaries.gpuvisionSharedLibrary.getSharedLibraryFile()
-    		outputs.file $.binaries.gpuvisionSharedLibrary.getSharedLibraryFile()
+	components {
+		gpuvision(NativeLibrarySpec) {
+			sources {			
+				cpp.lib library: 'jni', linkage: 'api'
+				cpp {
+					source {
+						srcDir 'src/main/jni'
+						//include "**/*.cpp"
+					}
+					lib library: 'opencv_imgproc', linkage: 'static'
+					lib library: 'opencv_cudaimgproc', linkage: 'static'
+					lib library: 'opencv_cudafilters', linkage: 'static'
+					lib library: 'opencv_core', linkage: 'static'
+					if (useCuda) {
+						lib library: 'cudart', linkage: 'static'
+						lib library: 'nppi', linkage: 'static'
+					}
+				}
+			}
+			buildTypes {
+				release
+			}
+			targetPlatform "armv7"
+		}
+	}
+		
+	tasks {
+		/*copyLibGpuvision {
+			dependsOn $.tasks.gpuvisionSharedLibrary
+			println $.tasks
+			inputs.file $.binaries.gpuvisionSharedLibrary.getSharedLibraryFile()
+			outputs.file $.binaries.gpuvisionSharedLibrary.getSharedLibraryFile()
 		}*/
 		jar {
 			//dependsOn $.tasks.copyLibGpuvision
 			from configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
 		}
-    }
+	}
 }
 
 task nativeHeaders(dependsOn: ':jar') {
 	def classes = ["org.usfirst.frc.team2084.CMonster2016.vision.HighGoalProcessor",
-	               "org.usfirst.frc.team2084.CMonster2016.vision.BoulderProcessor"]
-	def files = classes.collect { sourceSets.main.output.classesDir.absolutePath + "/" +it.replace(".", "/") };
+				   "org.usfirst.frc.team2084.CMonster2016.vision.BoulderProcessor"]
+	//def files = classes.collect { sourceSets.main.output.classesDir.absolutePath + "/" +it.replace(".", "/") };
 
-    inputs.files files
-    outputs.dir "src/main/jni"
-    exec {
-		executable org.gradle.internal.jvm.Jvm.current().getExecutable('javah')
-        args '-d', "src/main/jni"
-        args '-classpath', "build/libs/VisionProcessor2016.jar"
-		args classes
+	inputs.files '$buildDir/libs/VisionProcessor2016.jar'
+	outputs.dir "src/main/jni"
+	doLast {
+		exec {
+			executable org.gradle.internal.jvm.Jvm.current().getExecutable('javah')
+			args '-d', "src/main/jni"
+			args '-classpath', '$buildDir/libs/VisionProcessor2016.jar'
+			args classes
+		}
 	}
 }
 
 javadoc {
 	failOnError false
 }
-
 // This should not be changed without notifying everybody
 String opencvVersion = "3.1.0"
 String opencvCode = opencvVersion.replace(".", "")
@@ -168,10 +168,12 @@ dependencies {
 	if (osdetector.arch.contains("arm")) {
 		ntType = "arm"
 	}
-	runtime files('build/libs/gpuvision/shared/libgpuvision.so')
 	compile 'org.nanohttpd:nanohttpd:+'
 	compile 'com.fazecast:jSerialComm:+'
 	compileOnly 'edu.wpi.first.wpilib.networktables.java:NetworkTables:3.+:' + ntType
+	testCompile 'junit:junit:4.+'
+	testCompile 'org.hamcrest:hamcrest-library:1.+'
+	testCompile 'org.mockito:mockito-core:1.+'
 }
 
 

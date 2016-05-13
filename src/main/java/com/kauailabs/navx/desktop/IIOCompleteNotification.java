@@ -7,10 +7,7 @@
 /* modifications to this code must be accompanied by the \License.txt file    */ 
 /* in the root directory of the project.                                      */
 /*----------------------------------------------------------------------------*/
-package com.kauailabs.navx.frc;
-
-import com.kauailabs.navx.AHRSProtocol;
-import com.kauailabs.navx.IMUProtocol;
+package com.kauailabs.navx.desktop;
 
 interface IIOCompleteNotification {
     class BoardState {

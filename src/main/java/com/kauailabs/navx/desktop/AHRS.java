@@ -8,12 +8,11 @@
 /* in the root directory of the project.                                      */
 /*----------------------------------------------------------------------------*/
 
-package com.kauailabs.navx.frc;
+package com.kauailabs.navx.desktop;
 
-import com.kauailabs.navx.AHRSProtocol;
-import com.kauailabs.navx.AHRSProtocol.AHRSPosUpdate;
-import com.kauailabs.navx.AHRSProtocol.BoardID;
-import com.kauailabs.navx.IMUProtocol.YPRUpdate;
+import com.kauailabs.navx.desktop.AHRSProtocol.AHRSPosUpdate;
+import com.kauailabs.navx.desktop.AHRSProtocol.BoardID;
+import com.kauailabs.navx.desktop.IMUProtocol.YPRUpdate;
 
 import edu.wpi.first.wpilibj.tables.ITable;
 

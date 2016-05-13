@@ -20,9 +20,9 @@ import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 import org.usfirst.frc.team2084.CMonster2016.vision.capture.CameraCapture;
 
-import com.kauailabs.navx.frc.AHRS;
-import com.kauailabs.navx.frc.AHRS.SerialDataType;
-import com.kauailabs.navx.frc.Timer;
+import com.kauailabs.navx.desktop.AHRS;
+import com.kauailabs.navx.desktop.AHRS.SerialDataType;
+import com.kauailabs.navx.desktop.Timer;
 
 /**
  * Algorithm that finds the high goal on the FIRST Stronghold tower and
@@ -42,7 +42,7 @@ public class HighGoalProcessor extends ThreadedVisionProcessor {
     private volatile List<Target> allTargets;
     private volatile double processingFps;
 
-    public static final int GYRO_UPDATE_RATE = 60;
+    public static final int GYRO_UPDATE_RATE = 100;
     private final AHRS gyro = new AHRS("/dev/navx", SerialDataType.kProcessedData, (byte) GYRO_UPDATE_RATE);
     private final HistoryBuffer headingBuffer = new HistoryBuffer(GYRO_UPDATE_RATE / 2, GYRO_UPDATE_RATE);
 
@@ -66,7 +66,8 @@ public class HighGoalProcessor extends ThreadedVisionProcessor {
             synchronized (headingBuffer) {
                 long currTime = System.currentTimeMillis();
                 double yaw = gyro.getYaw();
-                System.out.println("yaw: " + yaw + ", dt: " + (currTime - lastGyroTime));
+                // System.out.println("yaw: " + yaw + ", dt: " + (currTime -
+                // lastGyroTime));
                 lastGyroTime = currTime;
                 headingBuffer.newValue(Timer.getFPGATimestamp(), yaw);
             }

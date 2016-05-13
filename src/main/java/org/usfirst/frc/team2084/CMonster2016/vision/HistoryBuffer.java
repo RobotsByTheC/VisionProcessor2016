@@ -6,7 +6,7 @@
  */
 package org.usfirst.frc.team2084.CMonster2016.vision;
 
-import com.kauailabs.navx.frc.Timer;
+import com.kauailabs.navx.desktop.Timer;
 
 /**
  * @author Ben Wolsieffer
@@ -26,18 +26,17 @@ public class HistoryBuffer {
 
     public void newValue(double time, double value) {
         if (filledLength < buffer.length) {
-            buffer[filledLength][0] = value;
+            buffer[filledLength][0] = time;
             buffer[filledLength][1] = value;
             ++filledLength;
 
         } else {
-            ++start;
             if (start >= filledLength) {
                 start = 0;
             }
-            int index = getIndex(0);
-            buffer[index][0] = time;
-            buffer[index][1] = value;
+            buffer[start][0] = time;
+            buffer[start][1] = value;
+            ++start;
         }
     }
 
@@ -54,29 +53,38 @@ public class HistoryBuffer {
     }
 
     private double getElement(int position, int column) {
-        return buffer[getIndex(position)][column];
+        return getElement(position)[column];
+    }
+
+    private double[] getElement(int position) {
+        return buffer[getIndex(position)];
     }
 
     public double getValue(double time) {
         if (filledLength == 0) {
             return 0;
-        } else if (time >= getElement(0, 0)) {
+        } else if (time <= getElement(0, 0)) {
             return getElement(0, 1);
-        } else if (time <= getElement(filledLength - 1, 0)) {
+        } else if (time >= getElement(filledLength - 1, 0)) {
             return getElement(filledLength - 1, 1);
         } else {
             double currTime = Timer.getFPGATimestamp();
             double deltaTime = currTime - time;
-            int r = (int) (deltaTime * estimatedFrequency);
-            while (getElement(r, 0) > time) {
+            int r = filledLength - (int) (deltaTime * estimatedFrequency);
+            if (r < 0) {
+                r = 0;
+            } else if (r >= filledLength) {
+                r = filledLength - 1;
+            }
+            while (r < filledLength - 1 && getElement(r, 0) < time) {
                 r++;
             }
-            while (getElement(r, 0) < time) {
+            while (r > 0 && getElement(r, 0) >= time) {
                 r--;
             }
 
-            double[] oldCal = buffer[r + 1];
-            double[] newCal = buffer[r];
+            double[] oldCal = getElement(r + 1);
+            double[] newCal = getElement(r);
 
             double slope = (newCal[1] - oldCal[1]) / (newCal[0] - oldCal[0]);
             return slope * (time - oldCal[0]) + oldCal[1];

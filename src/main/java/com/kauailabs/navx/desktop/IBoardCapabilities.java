@@ -7,15 +7,10 @@
 /* modifications to this code must be accompanied by the \License.txt file    */ 
 /* in the root directory of the project.                                      */
 /*----------------------------------------------------------------------------*/
-package com.kauailabs.navx.frc;
+package com.kauailabs.navx.desktop;
 
-interface IIOProvider {
-    public boolean  isConnected();
-    public double   getByteCount();
-    public double   getUpdateCount();
-    public void     setUpdateRateHz(byte update_rate);
-    public void     zeroYaw();
-    public void     zeroDisplacement();
-    public void     run();
-    public void     stop();
+interface IBoardCapabilities {
+    public boolean isOmniMountSupported();
+    public boolean isBoardYawResetSupported();
+    public boolean isDisplacementSupported();
 }

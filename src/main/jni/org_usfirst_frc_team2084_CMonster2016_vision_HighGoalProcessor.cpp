@@ -64,5 +64,6 @@ void JNI_OnUnload(JavaVM *vm, void *reserved) {
 		gpuImage.release();
 		gpuHsvImage.release();
 		gpuBlurImage.release();
+		gpuGrayImage.release();
 	}
 }

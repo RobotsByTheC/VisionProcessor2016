@@ -70,11 +70,11 @@ public class Target implements Comparable<Target> {
 
     public static final double TARGET_WIDTH = 20.0 / 12.0;
     public static final double TARGET_HEIGHT = 12.0 / 12.0;
-    public static final double ARM_LENGTH = 3.5;
-    public static final double CAMERA_Y_OFFSET = -3.0 / 12.0;
-    public static final double CAMERA_X_OFFSET = 1.0;
-    public static final double ARM_PIVOT_Y_OFFSET = 1.5;
-    public static final double ARM_PIVOT_Z_OFFSET = 15.0 / 12.0;
+    public static final double ARM_LENGTH = 38.5 / 12.0;
+    public static final double CAMERA_Y_OFFSET = -3.375 / 12.0;
+    public static final double CAMERA_X_OFFSET = 10.25 / 12.0;
+    public static final double ARM_PIVOT_Y_OFFSET = 11.0 / 12.0;
+    public static final double ARM_PIVOT_Z_OFFSET = 13.5 / 12.0;
 
     /**
      * The ideal aspect ratio for the static (vertical) target.
@@ -319,11 +319,11 @@ public class Target implements Comparable<Target> {
         return score;
     }
 
-    public void draw(Mat image) {
-        draw(image, true);
+    public void draw(Mat image, double imageHeading) {
+        draw(image, true, imageHeading);
     }
 
-    public void draw(Mat image, boolean text) {
+    public void draw(Mat image, boolean text, double imageHeading) {
         Scalar drawColor = OTHER_TARGET_COLOR;
         if (text) {
             drawColor = TARGET_COLOR;
@@ -352,6 +352,8 @@ public class Target implements Comparable<Target> {
             double angleY = Math.toDegrees(rotation.get(1, 0)[0]);
             double angleZ = Math.toDegrees(rotation.get(2, 0)[0]);
 
+            Utils.drawText(image, "heading: " + NUMBER_FORMAT.format(Math.toDegrees(imageHeading)) + " deg", textX,
+                    IMAGE_SIZE.height - 65);
             Utils.drawText(image, "x angle: " + NUMBER_FORMAT.format(angleX) + " deg", textX, IMAGE_SIZE.height - 45);
             Utils.drawText(image, "y angle: " + NUMBER_FORMAT.format(angleY) + " deg", textX, IMAGE_SIZE.height - 25);
             Utils.drawText(image, "z angle: " + NUMBER_FORMAT.format(angleZ) + " deg", textX, IMAGE_SIZE.height - 5);

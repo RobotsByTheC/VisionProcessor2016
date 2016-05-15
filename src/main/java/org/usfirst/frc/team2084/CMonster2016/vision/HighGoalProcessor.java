@@ -65,7 +65,7 @@ public class HighGoalProcessor extends ThreadedVisionProcessor {
         gyro.setUpdateListener((timestamp) -> {
             synchronized (headingBuffer) {
                 long currTime = System.currentTimeMillis();
-                double yaw = gyro.getYaw();
+                double yaw = Math.toRadians(gyro.getYaw());
                 // System.out.println("yaw: " + yaw + ", dt: " + (currTime -
                 // lastGyroTime));
                 lastGyroTime = currTime;
@@ -130,16 +130,7 @@ public class HighGoalProcessor extends ThreadedVisionProcessor {
         Collections.sort(possibleTargets);
 
         if (!possibleTargets.isEmpty()) {
-            double heading;
-            {
-                byte[] timestampBytes = new byte[9];
-                image.get(0, 0, timestampBytes);
-                long timestamp = Utils.bytesToLong(timestampBytes);
-
-                synchronized (headingBuffer) {
-                    heading = headingBuffer.getValue(timestamp / 1000.0);
-                }
-            }
+            double heading = getHeading(image);
 
             target = possibleTargets.get(possibleTargets.size() - 1);
             VisionResults.setGoalHeading(heading + target.getGoalXAngle());
@@ -158,6 +149,20 @@ public class HighGoalProcessor extends ThreadedVisionProcessor {
         // debugImage("Blur", blurImage);
 
         processingFps = processingFpsCounter.update();
+    }
+
+    private double getHeading(Mat image) {
+        double heading;
+        {
+            byte[] timestampBytes = new byte[9];
+            image.get(0, 0, timestampBytes);
+            long timestamp = Utils.bytesToLong(timestampBytes);
+
+            synchronized (headingBuffer) {
+                heading = headingBuffer.getValue(timestamp / 1000.0);
+            }
+        }
+        return heading;
     }
 
     @Override
@@ -187,7 +192,7 @@ public class HighGoalProcessor extends ThreadedVisionProcessor {
         // Draw other targets
         Target localTarget = target;
         if (localTarget != null) {
-            localTarget.draw(image, true);
+            localTarget.draw(image, true, getHeading(image));
         }
 
         List<Target> localAllTargets = allTargets;
@@ -195,7 +200,7 @@ public class HighGoalProcessor extends ThreadedVisionProcessor {
             // Draw all other targets that were considered
             for (int i = localAllTargets.size() - 2; i >= 0; i--) {
                 Target t = localAllTargets.get(i);
-                t.draw(image, false);
+                t.draw(image, false, 0);
             }
         }
 

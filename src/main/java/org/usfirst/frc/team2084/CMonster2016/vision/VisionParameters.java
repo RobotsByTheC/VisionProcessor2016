@@ -18,7 +18,7 @@ public class VisionParameters {
 
     public static final String DEFAULT_CAMERA_SOURCE = "0";
 
-    public static final Range DEFAULT_GOAL_H_THRESHOLD = new Range(0, 176);
+    public static final Range DEFAULT_GOAL_H_THRESHOLD = new Range(0, 99);
     public static final Range DEFAULT_GOAL_S_THRESHOLD = new Range(0, 255);
     public static final Range DEFAULT_GOAL_V_THRESHOLD = new Range(99, 255);
     public static final double DEFAULT_GOAL_MIN_BLOB_AREA = 2000;

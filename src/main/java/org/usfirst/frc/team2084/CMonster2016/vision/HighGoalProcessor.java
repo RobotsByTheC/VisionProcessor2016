@@ -9,6 +9,7 @@ package org.usfirst.frc.team2084.CMonster2016.vision;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
@@ -114,17 +115,11 @@ public class HighGoalProcessor extends ThreadedVisionProcessor {
         List<MatOfPoint> contours = findContours(
                 thresholdImage/* threshold(blur(convertToHsv(image))) */);
 
-        // Array to hold blobs that possibly could be targets
-        ArrayList<Target> possibleTargets = new ArrayList<>();
-
         // Convert the contours to Targets
-        contours.stream().forEach((contour) -> {
+        List<Target> possibleTargets = contours.stream().map((contour) -> {
             contour = convexHull(contour);
-            Target target = new Target(contour, grayImage);
-            if (target.isValid()) {
-                possibleTargets.add(target);
-            }
-        });
+            return new Target(contour, grayImage);
+        }).filter((t) -> t.isAreaValid()).collect(Collectors.toList());
 
         // Sort the targets to find the highest scoring one
         Collections.sort(possibleTargets);
@@ -133,10 +128,14 @@ public class HighGoalProcessor extends ThreadedVisionProcessor {
             double heading = getHeading(image);
 
             target = possibleTargets.get(possibleTargets.size() - 1);
-            VisionResults.setGoalHeading(heading + target.getGoalXAngle());
-            VisionResults.setGoalAngle(target.getGoalYAngle());
-            VisionResults.setGoalDistance(target.getDistance());
-            VisionResults.update();
+            if (target.isValid()) {
+                VisionResults.setGoalHeading(heading + target.getGoalXAngle());
+                VisionResults.setGoalAngle(target.getGoalYAngle());
+                VisionResults.setGoalDistance(target.getDistance());
+                VisionResults.update();
+            } else {
+                target = null;
+            }
         } else {
             target = null;
         }
@@ -198,7 +197,7 @@ public class HighGoalProcessor extends ThreadedVisionProcessor {
         List<Target> localAllTargets = allTargets;
         if (localAllTargets != null) {
             // Draw all other targets that were considered
-            for (int i = localAllTargets.size() - 2; i >= 0; i--) {
+            for (int i = localAllTargets.size() - (target == null ? 1 : 2); i >= 0; i--) {
                 Target t = localAllTargets.get(i);
                 t.draw(image, false, 0);
             }

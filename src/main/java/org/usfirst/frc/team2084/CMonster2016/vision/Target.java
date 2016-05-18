@@ -63,9 +63,10 @@ public class Target implements Comparable<Target> {
     private static final MatOfDouble SIGN_NORMALIZATION_MATRIX = new MatOfDouble(1, -1, 1);
 
     public static final Scalar TARGET_COLOR = Color.GREEN;
-    public static final Scalar OTHER_TARGET_COLOR = Color.WHITE;
+    public static final Scalar VALID_TARGET_COLOR = Color.BLUE;
+    public static final Scalar INVALID_TARGET_COLOR = Color.WHITE;
     public static final int DRAW_THICKNESS = 2;
-    public static final NumberFormat SCORE_FORMAT = new DecimalFormat("#0.0");
+    public static final NumberFormat SCORE_FORMAT = new DecimalFormat("#0.00");
     public static final NumberFormat NUMBER_FORMAT = new DecimalFormat("#0.00");
 
     public static final double TARGET_WIDTH = 20.0 / 12.0;
@@ -92,31 +93,45 @@ public class Target implements Comparable<Target> {
     public static final double MIN_RECTANGULARITY_WIDTH_SCORE = 0;
     public static final double MIN_RECTANGULARITY_HEIGHT_SCORE = 0;
 
-    public static final double MAX_Y_ANGLE = Math.toRadians(50);
-    public static final double MAX_X_ANGLE = Math.toRadians(45);
-    public static final double MAX_Z_ANGLE = Math.toRadians(15);
+    public static final double MAX_Y_ANGLE = Math.toRadians(60);
+    public static final double MAX_X_ANGLE = Math.toRadians(60);
+    public static final double MAX_Z_ANGLE = Math.toRadians(25);
 
     private final MatOfPoint contour;
 
     private MatOfPoint2f corners;
 
-    private BooleanSupplier[] validators = {
-            this::validateZAngle,
-            this::validateYAngle,
-            this::validateDistance,
-            this::validateAspectRatio,
-            this::validateRectangularityHeight,
-            this::validateRectangularityWidth };
+    private static class Validator {
+
+        public final BooleanSupplier function;
+        public final String name;
+
+        public Validator(BooleanSupplier function, String name) {
+            this.function = function;
+            this.name = name;
+        }
+
+    }
+
+    private Validator[] validators = {
+            new Validator(this::validateZAngle, "Z Angle"),
+            new Validator(this::validateXAngle, "X Angle"),
+            new Validator(this::validateDistance, "Distance"),
+            new Validator(this::validateAspectRatio, "Aspect Ratio"),
+            new Validator(this::validateRectangularityHeight, "Rectangularity Height"),
+            new Validator(this::validateRectangularityWidth, "Rectangularity Width") };
     private DoubleSupplier[] scores = { this::scoreAngle };
 
     /**
      * The score of this target.
      */
     private double score = -1;
+
     /**
      * Stores whether or not the target meets the minimum score requirements.
      */
     private boolean valid = true;
+    private boolean validArea = true;
 
     private Point topLeft;
     private Point topRight;
@@ -157,7 +172,7 @@ public class Target implements Comparable<Target> {
         this.contour = contour;
 
         // Check area, and don't do any calculations if it is not valid
-        if (validateArea()) {
+        if (validArea = validateArea()) {
 
             // Find a bounding rectangle
             RotatedRect rect = Imgproc.minAreaRect(fContour);
@@ -324,7 +339,7 @@ public class Target implements Comparable<Target> {
     }
 
     public void draw(Mat image, boolean text, double imageHeading) {
-        Scalar drawColor = OTHER_TARGET_COLOR;
+        Scalar drawColor = isValid() ? VALID_TARGET_COLOR : INVALID_TARGET_COLOR;
         if (text) {
             drawColor = TARGET_COLOR;
         }
@@ -336,7 +351,11 @@ public class Target implements Comparable<Target> {
 
         Imgproc.circle(image, center, 5, drawColor);
 
-        Utils.drawText(image, "score: " + SCORE_FORMAT.format(score), center.x - 50, center.y + 20, 1, Color.RED);
+        if (isValid()) {
+            Utils.drawText(image, "score: " + SCORE_FORMAT.format(score), center.x - 50, center.y + 20, 1, Color.RED);
+        } else {
+            Utils.drawText(image, "failed: " + failedValidator, center.x - 50, center.y + 20, 1, Color.RED);
+        }
 
         if (text) {
             Utils.drawText(image, " rotation: " + NUMBER_FORMAT.format(Math.toDegrees(xGoalAngle)) + " deg", 0,
@@ -361,13 +380,20 @@ public class Target implements Comparable<Target> {
 
     }
 
+    private String failedValidator = "";
+
     private boolean validate() {
-        for (BooleanSupplier validator : validators) {
-            if (!validator.getAsBoolean()) {
+        for (Validator validator : validators) {
+            if (!validator.function.getAsBoolean()) {
+                failedValidator = validator.name;
                 return valid = false;
             }
         }
         return valid = true;
+    }
+
+    public String getFailedValidator() {
+        return failedValidator;
     }
 
     private boolean validateArea() {
@@ -378,6 +404,9 @@ public class Target implements Comparable<Target> {
         return Math.abs(rotation.get(0, 0)[0]) < MAX_X_ANGLE;
     }
 
+    /**
+     * This isn't reliable enough to use.
+     */
     private boolean validateYAngle() {
         return Math.abs(rotation.get(1, 0)[0]) < MAX_X_ANGLE;
     }
@@ -482,6 +511,10 @@ public class Target implements Comparable<Target> {
         return valid;
     }
 
+    public boolean isAreaValid() {
+        return validArea;
+    }
+
     /**
      * @return the area
      */
@@ -512,7 +545,13 @@ public class Target implements Comparable<Target> {
 
     @Override
     public int compareTo(Target o) {
-        return (int) (score - o.score);
+        if (score < o.score) {
+            return -1;
+        } else if (score > o.score) {
+            return 1;
+        } else {
+            return 0;
+        }
     }
 
     private static Mat matFrom2DArray(double[][] array) {

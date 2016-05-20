@@ -182,7 +182,7 @@ public class HighGoalProcessor extends ThreadedVisionProcessor {
 
         // Encode the estimated image timestamp into the top left corner
         byte[] timestamp = new byte[9];
-        Utils.longToBytes((long) (System.currentTimeMillis() - (ESTIMATED_CAMERA_LATENCY * 1000)), timestamp);
+        Utils.longToBytes((long) ((Timer.getFPGATimestamp() - ESTIMATED_CAMERA_LATENCY) * 1000), timestamp);
         image.put(0, 0, timestamp);
     }
 

@@ -10,6 +10,8 @@ import edu.wpi.first.wpilibj.networktables.NetworkTable;
 import edu.wpi.first.wpilibj.tables.ITable;
 
 /**
+ * Results from the vision algorithm. These are synchronized over NetworkTables.
+ * 
  * @author Ben Wolsieffer
  */
 public class VisionResults {

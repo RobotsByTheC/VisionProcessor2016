@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2015 RobotsByTheC. All rights reserved.
+ * Copyright (c) 2016 RobotsByTheC. All rights reserved.
  *
  * Open Source Software - may be modified and shared by FRC teams. The code must
  * be accompanied by the BSD license file in the root directory of the project.
@@ -13,6 +13,9 @@ import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 
 /**
+ * Utility class that converts between Java {@link BufferedImage}s and OpenCV
+ * {@link Mat}s.
+ * 
  * @author Ben Wolsieffer
  */
 public final class ImageConvertor {

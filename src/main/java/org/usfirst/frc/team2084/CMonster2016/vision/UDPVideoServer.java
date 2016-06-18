@@ -18,7 +18,8 @@ import org.opencv.imgcodecs.Imgcodecs;
 
 /**
  * Serves a Motion JPEG image over HTTP. It supports multiple simultaneous
- * clients and can be started and stopped repeatedly.
+ * clients and can be started and stopped repeatedly. This is what we use for
+ * streaming now.
  * 
  * @author Ben Wolsieffer
  */

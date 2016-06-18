@@ -9,6 +9,9 @@ package org.usfirst.frc.team2084.CMonster2016.vision;
 import com.kauailabs.navx.desktop.Timer;
 
 /**
+ * A buffer that keeps track of values at various times in the past and allows
+ * interpolated lookups of values in between them.
+ * 
  * @author Ben Wolsieffer
  */
 public class HistoryBuffer {
@@ -24,6 +27,12 @@ public class HistoryBuffer {
         this.estimatedFrequency = estimatedFrequency;
     }
 
+    /**
+     * Adds a new value to the buffer at the specified time.
+     * 
+     * @param time the time the value was sampled
+     * @param value the value to add
+     */
     public void newValue(double time, double value) {
         if (filledLength < buffer.length) {
             buffer[filledLength][0] = time;
@@ -60,6 +69,13 @@ public class HistoryBuffer {
         return buffer[getIndex(position)];
     }
 
+    /**
+     * Get a value from the buffer the specified time. If the time is not within
+     * the known values of the buffer, the oldest or newest value is returned.
+     * 
+     * @param time the time to retrieve a value.
+     * @return the value at that time
+     */
     public double getValue(double time) {
         if (filledLength == 0) {
             return 0;

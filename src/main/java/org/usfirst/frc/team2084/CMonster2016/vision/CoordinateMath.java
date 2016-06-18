@@ -11,10 +11,19 @@ import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 
 /**
+ * Coordinate transform math library.
+ * 
  * @author Ben Wolsieffer
  */
 public class CoordinateMath {
 
+    /**
+     * Rotate a point around the x axis and store the result in another point.
+     * 
+     * @param point the point to rotate
+     * @param destPoint the output point
+     * @param angle the angle to rotate (in radians)
+     */
     public static void rotateX(Mat point, Mat destPoint, double angle) {
         Mat rotateMat = Mat.eye(3, 3, point.type());
 
@@ -29,10 +38,23 @@ public class CoordinateMath {
         matMult(rotateMat, point, destPoint);
     }
 
+    /**
+     * Rotate a point around the x axis.
+     * 
+     * @param point the point to rotate
+     * @param angle the angle to rotate (in radians)
+     */
     public static void rotateX(Mat point, double angle) {
         rotateX(point, point, angle);
     }
 
+    /**
+     * Rotate a point around the y axis and store the result in another point.
+     * 
+     * @param point the point to rotate
+     * @param destPoint the output point
+     * @param angle the angle to rotate (in radians)
+     */
     public static void rotateY(Mat point, Mat destPoint, double angle) {
         Mat rotateMat = Mat.eye(3, 3, point.type());
 
@@ -47,10 +69,23 @@ public class CoordinateMath {
         matMult(rotateMat, point, destPoint);
     }
 
+    /**
+     * Rotate a point around the y axis.
+     * 
+     * @param point the point to rotate
+     * @param angle the angle to rotate (in radians)
+     */
     public static void rotateY(Mat point, double angle) {
         rotateY(point, point, angle);
     }
 
+    /**
+     * Rotate a point around the z axis and store the result in another point.
+     * 
+     * @param point the point to rotate
+     * @param destPoint the output point
+     * @param angle the angle to rotate (in radians)
+     */
     public static void rotateZ(Mat point, Mat destPoint, double angle) {
         Mat rotateMat = Mat.eye(3, 3, point.type());
 
@@ -65,10 +100,25 @@ public class CoordinateMath {
         matMult(rotateMat, point, destPoint);
     }
 
+    /**
+     * Rotate a point around the z axis.
+     * 
+     * @param point the point to rotate
+     * @param angle the angle to rotate (in radians)
+     */
     public static void rotateZ(Mat point, double angle) {
         rotateZ(point, point, angle);
     }
 
+    /**
+     * Translate a point in space.
+     * 
+     * @param vec the input point
+     * @param destVec the output point
+     * @param x the x translation
+     * @param y the y translation
+     * @param z the z translation
+     */
     public static void translate(Mat vec, Mat destVec, double x, double y, double z) {
         Mat translateVec = new Mat(3, 1, CvType.CV_64FC1);
         translateVec.put(0, 0, x);
@@ -78,10 +128,25 @@ public class CoordinateMath {
         Core.add(vec, translateVec, destVec);
     }
 
+    /**
+     * Translate a point in space.
+     * 
+     * @param vec the point
+     * @param x the x translation
+     * @param y the y translation
+     * @param z the z translation
+     */
     public static void translate(Mat vec, double x, double y, double z) {
         translate(vec, vec, x, y, z);
     }
 
+    /**
+     * Multiply two matrices.
+     * 
+     * @param src1 the first matrix
+     * @param src2 the second matrix
+     * @param dest the output matrix
+     */
     public static void matMult(Mat src1, Mat src2, Mat dest) {
         Core.gemm(src1, src2, 1, Mat.zeros(dest.size(), dest.type()), 1, dest);
     }

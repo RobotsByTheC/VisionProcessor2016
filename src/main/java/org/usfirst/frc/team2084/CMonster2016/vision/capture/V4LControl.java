@@ -12,6 +12,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Allows control of V4L parameters that are not exposed through OpenCV.
+ * Requires {@code v4l2-ctl}.
  * 
  * @author Ben Wolsieffer
  */

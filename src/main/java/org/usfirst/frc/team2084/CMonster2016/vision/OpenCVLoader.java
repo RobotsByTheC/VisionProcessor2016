@@ -12,6 +12,9 @@ import java.util.Arrays;
 import org.opencv.core.Core;
 
 /**
+ * Class that tries to find and load the OpenCV native libraries in a lot of
+ * different places.
+ * 
  * @author ben
  */
 public final class OpenCVLoader {

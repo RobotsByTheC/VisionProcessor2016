@@ -25,6 +25,10 @@ import org.opencv.core.TermCriteria;
 import org.opencv.imgproc.Imgproc;
 
 /**
+ * Processor that calibrates a camera using a 10 by 7 checkerboard (included in
+ * the images directory). This is designed to be used from the VisionTest
+ * application.
+ * 
  * @author Ben Wolsieffer
  */
 public class CameraCalibration extends VisionProcessor {
@@ -71,7 +75,10 @@ public class CameraCalibration extends VisionProcessor {
     }
 
     /**
-     * @param image
+     * Draws checkerboard corners on an image.
+     * 
+     * @param image the image to process
+     * @param addToCalibration if true, add this image to the corner list
      */
     public void process(Mat image, boolean addToCalibration) {
         boolean patternFound = Calib3d.findChessboardCorners(image, boardSize, boardCorners,
@@ -104,6 +111,12 @@ public class CameraCalibration extends VisionProcessor {
                 new Scalar(0, 255, 0));
     }
 
+    /**
+     * Calibrate the camera. This goes through all the corners in the list and
+     * calibrates based off them.
+     * 
+     * @return the reprojection error
+     */
     public double calibrate() {
         cameraMatrix = Mat.eye(3, 3, CvType.CV_64F);
         distCoeffs = new MatOfDouble(Mat.zeros(8, 1, CvType.CV_64F));
@@ -120,6 +133,11 @@ public class CameraCalibration extends VisionProcessor {
                 cameraMatrix, distCoeffs, rvecs, tvecs, Calib3d.CALIB_FIX_PRINCIPAL_POINT);
     }
 
+    /**
+     * Calculate the corner positions of the board in world units.
+     * 
+     * @return the calculated corners
+     */
     private MatOfPoint3f calcBoardCornerPositions() {
         Point3[] cornersArr = new Point3[(int) boardSize.area()];
 

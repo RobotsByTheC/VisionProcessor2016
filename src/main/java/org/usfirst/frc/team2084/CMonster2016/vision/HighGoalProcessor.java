@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2014 RobotsByTheC. All rights reserved.
+ * Copyright (c) 2016 RobotsByTheC. All rights reserved.
  *
  * Open Source Software - may be modified and shared by FRC teams. The code must
  * be accompanied by the BSD license file in the root directory of the project.
@@ -27,13 +27,19 @@ import com.kauailabs.navx.desktop.Timer;
 
 /**
  * Algorithm that finds the high goal on the FIRST Stronghold tower and
- * calculates the robot's distance from it and the heading of the target.
+ * calculates the robot's distance from it and the heading of the target. This
+ * class and {@link Target} are the most important parts of our vision code.
  *
  * @author Ben Wolsieffer
  */
 public class HighGoalProcessor extends ThreadedVisionProcessor {
 
     public static final Size IMAGE_SIZE = new Size(640, 480);
+
+    /**
+     * Estimated latency of the camera in seconds. This was empirically
+     * estimated.
+     */
     public static final double ESTIMATED_CAMERA_LATENCY = 0.1279;
 
     private volatile boolean newImage;
@@ -45,6 +51,10 @@ public class HighGoalProcessor extends ThreadedVisionProcessor {
 
     public static final int GYRO_UPDATE_RATE = 100;
     private final AHRS gyro = new AHRS("/dev/navx", SerialDataType.kProcessedData, (byte) GYRO_UPDATE_RATE);
+
+    /**
+     * Buffer used for compensating for camera lag as the robot turns.
+     */
     private final HistoryBuffer headingBuffer = new HistoryBuffer(GYRO_UPDATE_RATE / 2, GYRO_UPDATE_RATE);
 
     private final CameraCapture camera;
@@ -54,9 +64,6 @@ public class HighGoalProcessor extends ThreadedVisionProcessor {
 
     private long lastGyroTime = System.currentTimeMillis();
 
-    /**
-     * @param capture
-     */
     public HighGoalProcessor(CameraCapture capture) {
         super(capture != null);
         if (capture != null) {
@@ -77,7 +84,7 @@ public class HighGoalProcessor extends ThreadedVisionProcessor {
 
     /**
      * Native function that does the color conversion, blurring and thresholding
-     * of the image. This runs on the an Nvidia GPU if available.
+     * of the image. This runs on the an NVIDIA GPU if available.
      * 
      * @param inputImageAddr the address of the input image
      * @param outputImageAddr the address of the image to write to
@@ -150,6 +157,14 @@ public class HighGoalProcessor extends ThreadedVisionProcessor {
         processingFps = processingFpsCounter.update();
     }
 
+    /**
+     * Gets of the robot when the given image was taken. It does this by reading
+     * the timestamp from the top left corner of the image and looking up the
+     * heading in the history buffer.
+     * 
+     * @param image the image to get the timestamp from
+     * @return the heading of the robot when the image was taken
+     */
     private double getHeading(Mat image) {
         double heading;
         {

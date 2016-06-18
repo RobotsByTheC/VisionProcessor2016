@@ -9,6 +9,8 @@ package org.usfirst.frc.team2084.CMonster2016.vision;
 import java.io.ByteArrayOutputStream;
 
 /**
+ * I needed this functionality once, but I don't think it is used anymore.
+ * 
  * @author Ben Wolsieffer
  */
 public class NakedByteArrayOutputStream extends ByteArrayOutputStream {

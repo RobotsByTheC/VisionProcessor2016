@@ -20,7 +20,9 @@ import fi.iki.elonen.NanoHTTPD.Response.Status;
 
 /**
  * Serves a Motion JPEG image over HTTP. It supports multiple simultaneous
- * clients and can be started and stopped repeatedly.
+ * clients and can be started and stopped repeatedly. We stopped using this
+ * because of bandwidth problems on the field. {@link UDPVideoServer} works much
+ * better.
  * 
  * @author Ben Wolsieffer
  */

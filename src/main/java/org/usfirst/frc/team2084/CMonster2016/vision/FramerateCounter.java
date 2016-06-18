@@ -7,6 +7,8 @@
 package org.usfirst.frc.team2084.CMonster2016.vision;
 
 /**
+ * Class that keeps track of framerate using a weighted average.
+ * 
  * @author Ben Wolsieffer
  */
 public class FramerateCounter {
@@ -17,7 +19,6 @@ public class FramerateCounter {
     private double averageFps = 1;
 
     public FramerateCounter() {
-
     }
 
     public double update() {

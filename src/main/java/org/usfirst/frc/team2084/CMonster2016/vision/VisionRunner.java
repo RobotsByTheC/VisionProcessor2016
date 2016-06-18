@@ -12,6 +12,9 @@ import org.opencv.core.Mat;
 import org.usfirst.frc.team2084.CMonster2016.vision.capture.CameraCapture;
 
 /**
+ * Class that automatically handles capturing from a camera and passing it to a
+ * vision processor.
+ * 
  * @author Ben Wolsieffer
  */
 public class VisionRunner {

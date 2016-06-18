@@ -21,6 +21,9 @@ import org.opencv.imgproc.Imgproc;
 import org.usfirst.frc.team2084.CMonster2016.vision.capture.CameraCapture;
 
 /**
+ * A processor designed to track a boulder based on its color. It didn't work
+ * and we didn't need it.
+ * 
  * @author Ben Wolsieffer
  */
 public class BoulderProcessor extends ThreadedVisionProcessor {
@@ -49,7 +52,7 @@ public class BoulderProcessor extends ThreadedVisionProcessor {
 
     /**
      * Native function that does the color conversion and thresholding of the
-     * image. This runs on the an Nvidia GPU if available.
+     * image. This runs on the an NVIDIA GPU if available.
      * 
      * @param inputImageAddr the address of the input image
      * @param outputImageAddr the address of the image to write to

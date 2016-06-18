@@ -12,6 +12,8 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 
 /**
+ * Test of {@link HistoryBuffer} functionality.
+ * 
  * @author Ben Wolsieffer
  */
 public class HistoryBufferTest {

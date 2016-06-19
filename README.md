@@ -1,20 +1,26 @@
 # VisionProcessor2016
 
-#### Computer vision algorithms for the 2016 FRC season.
+##### Computer vision algorithms for the 2016 FRC season.
 
-This project does nothing by itself and simply serves as a library which
-[VisionServer2016](https://github.com/RobotsByTheC/VisionServer2016) and
-[SmartDashboardExtensions2016](https://github.com/RobotsByTheC/SmartDashboardExtensions2015)
-use.
-
-### Requirements
-* Java
-* OpenCV 2.4.12 (this is the version the build script looks for, but it can be
-  changed)
-
-If the OpenCV jar cannot be found, you probably need to add its location to the
-`opencvLocations` array in `build.gradle`.
+This library implements our computer vision algorithm but does not provide any way to run them. In competition, we run our vision on an NVIDIA Jetson TK1 using [VisionServer2016](../../../VisionServer2016).
 
 If you get an `UnsatisfiedLinkError` when trying to run anything that uses this
 library, you probably need to add the native library directory to
 `OPENCV_SEARCH_PATHS` in `OpenCVLoader.java`.
+
+### Explanation of the vision system
+Our robot’s automatic aiming system uses a camera and computer vision to detect and measure the vision targets on the high goals in real time. The processing is done on an NVIDIA Jetson TK1, which reads images from a Microsoft Lifecam HD-3000 USB webcam. The webcam has two concentric rings of bright green LEDs around the lens. The distance and heading of the target are then sent to the roboRIO over NetworkTables.
+
+To maintain the real time nature of the system, three threads are used in the processing software on the Jetson. The camera driver buffers images if they are not read immediately, so one thread constantly grabs the latest image from the camera and guarantees that the most recent image can be retrieved at any time or at any rate. 
+
+The second thread does the actual processing of the image. The first stage of our algorithm is a fairly standard solution that uses thresholding and contour detection to find bright green blobs in the image. The software then identifies the vertices of the contour that appear to be the corners of the goal, and passes those to the Perspective-n-Point (PnP) algorithm that determines the position of the goal in space. While other teams may use PnP, it seems to be less common than other solutions. PnP uses the known position of a set of points in the real world (the corners of the goal) and the corresponding positions of those points in an image to calculate the position and orientation of the camera. For our team, this worked very well, especially compared to a more commonly used solution which uses the apparent width of the target to calculate distance. During the official competition season, we used the latter algorithm, but once we switch to using PnP, our accuracy improved significantly. This change significantly improved the ability for our robot to make shots when it was not facing directly towards the goal. An extreme example of the capability is shown here: https://www.youtube.com/watch?v=fmnIa44Wc6c
+
+Another interesting part of the algorithm is the code that uses the OpenCV CUDA module to do some of the image operations on the Jetson’s GPU. Since the majority of the vision code is in Java, and the CUDA module is not available through the Java wrappers, I wrote small JNI library that calls the CUDA functions. Although the only operations that are done on the GPU are the RGB to HSV color space conversion and the blurring to remove noise from the image, this increased the processing frame rate from around 15 FPS to 30 FPS, at which point it is being limited by the frame rate of the camera. Some limited testing has shown that it could likely reach 60 FPS or higher, given a camera capable of these frame rates. To be able to achieve these frame rates, I discovered that it was necessary to override the GPU clock speed on the Jetson. When no display is connected, the GPU decreases its clock speed to save power, and it does not increase when a CUDA workload is placed on it. Therefore, it is necessary to use a workaround to force a higher clock speed, which is described [here](https://devtalk.nvidia.com/default/topic/747641/jetson-tk1/anyone-know-how-to-monitor-the-gpu-mhz-/post/4230039/#4230039). 
+
+At the same time, there is a third thread that is streaming the image to the driver station, where it is used both to help navigate, and so the driver can see the status of the aiming system. Therefore, especially before the processing was able to match the frame rate of the camera, I needed to stream the camera images as fast as possible, even if the processing could not happen at the same rate. The latest targeting information is overlaid on each image that was sent. Also, it is beneficial to do our aiming with a fixed low exposure on the camera, to minimize the effects of background light, but when we use it for driving it is easier to see when autoexposure is enabled, so the camera automatically switches when we start aiming. To accomplish this, we use the “vtl2-ctl” application, because OpenCV does not have any functioning way to change the exposure of USB webcams.
+
+To view our camera on the driver station, we send a stream of highly compressed JPEG images over UDP. Up until Saturday morning in at our , we used an HTTP MJPEG stream, just like the Axis IP cameras that many teams use. This worked fine at home and when tethered in the pits, but we found that on the field it would drop the TCP connection every few seconds, rendering the stream unusable. We had this problem throughout our first event, and were unable to solve it, but after working extensively with the FTA in Boston, we decided that the QOS system on the field was likely causing our high frame rate MJPEG stream to timeout, despite using much less than the maximum bandwidth available on the field. The FTA recommended that we try using UDP, which does not have the same problems of a stateful connection and guaranteed packet transmission. In the car ride that night and the next morning I wrote our current UDP streaming system, which worked nearly perfectly throughout the rest of the competition.
+
+### Flowchart
+
+![Vision Algorithm Flowchart](https://cdn.rawgit.com/RobotsByTheC/VisionProcessor2016/master/Flowchart.svg)
